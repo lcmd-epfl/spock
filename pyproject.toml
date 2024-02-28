@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "navicat_spock"
+version = "0.0.1"
+authors = [
+  { name="R. Laplaza", email="rlaplaza@duck.com" },
+]
+description = "Volcano Plot fitting tool"
+keywords = ["compchem"]
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+  'h5py >= 3.3.0',
+  'matplotlib >= 3.6.1',
+  'numpy >= 1.23.4',
+  'pandas >= 1.5.0',
+  'scikit_learn >= 1.2.0',
+  'scipy >= 1.9.1',
+  'setuptools >=65.4.1',
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.scripts]
+navicat_spock = "navicat_spock.spock:run_spock"
