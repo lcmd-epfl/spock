@@ -2,6 +2,7 @@ import numpy as np
 import scipy.stats
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
+import warnings
 
 import piecewise_regression.r_squared_calc as r_squared_calc
 from piecewise_regression.data_validation import (
@@ -667,14 +668,16 @@ class Fit:
         # Positive float. Minimum distance from edge of data to a
         # breakpoint, as a proportion of the data range.
         min_distance_to_edge=0.02,
-        weights=weights,
+        weights=None,
     ):
         self.verbose = validate_boolean(verbose, "verbose")
 
         if self.verbose:
             print("\nInstantiating Fit . . . ")
 
-        self.weights = weights
+        if weights is not None:
+            self.weights = weights
+
         # Validate all input data
         self.xx = validate_list_of_numbers(xx, "xx", min_length=3)
         self.yy = validate_list_of_numbers(yy, "yy", min_length=3)
@@ -1200,6 +1203,7 @@ class ModelSelection:
                 tolerance=tolerance,
                 min_distance_between_breakpoints=min_d_between_bps,
                 min_distance_to_edge=min_distance_to_edge,
+                weights=weights,
             )
             fit_summary = bootstrapped_fit.get_results()
             fit_summary["n_breakpoints"] = k

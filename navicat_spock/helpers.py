@@ -3,12 +3,75 @@
 import argparse
 import itertools
 import os
+import sklearn as sk
 from itertools import cycle
 
 import numpy as np
 import pandas as pd
 
 from navicat_volcanic.exceptions import InputError
+
+
+def call_imputer(a, b, imputer_strat="iterative"):
+    if imputer_strat == "iterative":
+        try:
+            from sklearn.experimental import enable_iterative_imputer
+            from sklearn.impute import IterativeImputer
+        except ModuleNotFoundError as err:
+            return a
+        imputer = IterativeImputer(max_iter=25)
+        newa = imputer.fit(b).transform(a.reshape(1, -1)).flatten()
+        return newa
+    elif imputer_strat == "simple":
+        try:
+            from sklearn.impute import SimpleImputer
+        except ModuleNotFoundError as err:
+            return a
+        imputer = SimpleImputer()
+        newa = imputer.fit_transform(a.reshape(-1, 1)).flatten()
+        return newa
+    elif imputer_strat == "knn":
+        try:
+            from sklearn.impute import KNNImputer
+        except ModuleNotFoundError as err:
+            return a
+        imputer = KNNImputer(n_neighbors=2)
+        newa = imputer.fit(b).transform(a.reshape(1, -1)).flatten()
+        return newa
+    elif imputer_strat == "none":
+        return a
+    else:
+        return a
+
+
+def curate_d(d, descriptors, cb, ms, tags, imputer_strat="none", verb=0):
+    assert isinstance(d, np.ndarray)
+    curated_d = np.zeros_like(d)
+    for i in range(d.shape[0]):
+        n_nans = np.count_nonzero(np.isnan(d[i, :]))
+        if n_nans > 0:
+            tofix = d[i, :]
+            if verb > 1:
+                print(f"Using the imputer strategy, converted\n {tofix}.")
+            toref = d[np.arange(d.shape[0]) != i, :]
+            d[i, :] = call_imputer(tofix, toref, imputer_strat)
+            if verb > 1:
+                print(f"to\n {d[i,:]}.")
+        curated_d[i, :] = d[i, :]
+    incomplete = np.ones_like(curated_d[:, 0], dtype=bool)
+    for i in range(curated_d.shape[0]):
+        n_nans = np.count_nonzero(np.isnan(d[i, :]))
+        if n_nans > 0:
+            if verb > 1:
+                print(
+                    f"Some of your rows contain {n_nans} undefined values and will not be considered:\n {curated_d[i,:]}"
+                )
+            incomplete[i] = False
+    curated_cb = cb[incomplete]
+    curated_ms = ms[incomplete]
+    curated_tags = tags[incomplete]
+    curated_d = d[incomplete, :]
+    return curated_d, curated_cb, curated_ms, curated_tags
 
 
 def yesno(question):
@@ -88,7 +151,7 @@ def processargs(arguments):
         dest="plotmode",
         type=int,
         default=1,
-        help="Plot mode for volcano and activity map plotting. Higher is more detailed, lower is basic. 3 includes uncertainties. (default: 1)",
+        help="Plot mode for volcano plotting. Higher is more detailed, lower is more basic. (default: 1)",
     )
     vbuilder.add_argument(
         "-is",
@@ -100,7 +163,7 @@ def processargs(arguments):
     )
     args = vbuilder.parse_args(arguments)
 
-    dfs, ddfs = check_input(
+    dfs = check_input(
         args.filenames,
         args.imputer_strat,
         args.verb,
@@ -110,15 +173,9 @@ def processargs(arguments):
     else:
         df = dfs[0]
     assert isinstance(df, pd.DataFrame)
-    if args.verb > 1:
-        print("Final descriptor database (top rows):")
-        print(ddf.head())
-    for column in ddf:
-        df.insert(1, f"Descriptor {column}", ddf[column].values)
     return (
         df,
         args.verb,
-        args.temp,
         args.imputer_strat,
         args.plotmode,
     )
@@ -129,7 +186,6 @@ def check_input(filenames, imputer_strat, verb):
     accepted_imputer_strats = ["simple", "knn", "iterative", "none"]
     accepted_nds = [1, 2]
     dfs = []
-    ddfs = []
     for filename in filenames:
         if filename.split(".")[-1] in accepted_excel_terms:
             dfs.append(pd.read_excel(filename))
@@ -145,4 +201,4 @@ def check_input(filenames, imputer_strat, verb):
         )
     if not isinstance(verb, int):
         raise InputError("Invalid verbosity input! Should be a positive integer or 0.")
-    return dfs, ddfs
+    return dfs

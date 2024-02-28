@@ -23,12 +23,11 @@ setup(
     classifiers=["Programming Language :: Python :: 3"],
     install_requires=[
         "numpy",
-        "scipy",
         "matplotlib",
         "pandas",
-        "h5py",
-        "scikit-learn",
         "setuptools",
+        "scikit-learn",
+        "piecewise-regression",
     ],
     include_package_data=True,
     entry_points={
