@@ -3,13 +3,14 @@
 import argparse
 import itertools
 import os
+import re
 import sklearn as sk
 from itertools import cycle
 
 import numpy as np
 import pandas as pd
 
-from navicat_volcanic.exceptions import InputError
+from navicat_spock.exceptions import InputError
 
 
 def call_imputer(a, b, imputer_strat="iterative"):
@@ -44,7 +45,11 @@ def call_imputer(a, b, imputer_strat="iterative"):
         return a
 
 
-def curate_d(d, descriptors, cb, ms, tags, imputer_strat="none", verb=0):
+def namefixer(filename):
+    return re.sub("[^a-zA-Z0-9 \n\.]", "_", filename).replace(" ", "_")
+
+
+def curate_d(d, descriptors, cb, ms, names, imputer_strat="none", verb=0):
     assert isinstance(d, np.ndarray)
     curated_d = np.zeros_like(d)
     for i in range(d.shape[0]):
@@ -69,9 +74,9 @@ def curate_d(d, descriptors, cb, ms, tags, imputer_strat="none", verb=0):
             incomplete[i] = False
     curated_cb = cb[incomplete]
     curated_ms = ms[incomplete]
-    curated_tags = tags[incomplete]
+    curated_names = names[incomplete]
     curated_d = d[incomplete, :]
-    return curated_d, curated_cb, curated_ms, curated_tags
+    return curated_d, curated_cb, curated_ms, curated_names
 
 
 def yesno(question):
@@ -115,12 +120,12 @@ def group_data_points(bc, ec, names):
 
 def processargs(arguments):
     vbuilder = argparse.ArgumentParser(
-        prog="volcanic",
-        description="Build volcano plots from reaction energy profile data.",
-        epilog="Remember to cite the volcanic paper: \n \nLaplaza, R., Das, S., Wodrich, M.D. et al. Constructing and interpreting volcano plots and activity maps to navigate homogeneous catalyst landscapes. Nat Protoc (2022). \nhttps://doi.org/10.1038/s41596-022-00726-2 \n \n - and enjoy!",
+        prog="spock",
+        description="Fit volcano plots to experimental data.",
+        epilog="Remember to cite the spock paper (when its out!) \n \n - and enjoy!",
     )
     vbuilder.add_argument(
-        "-version", "--version", action="version", version="%(prog)s 1.3.3"
+        "-version", "--version", action="version", version="%(prog)s 0.0.1"
     )
     runmode_arg = vbuilder.add_mutually_exclusive_group()
     vbuilder.add_argument(
@@ -163,22 +168,13 @@ def processargs(arguments):
     )
     args = vbuilder.parse_args(arguments)
 
-    dfs = check_input(
-        args.filenames,
-        args.imputer_strat,
-        args.verb,
-    )
+    dfs = check_input(args.filenames, args.imputer_strat, args.verb)
     if len(dfs) == 0:
         raise InputError("No input profiles detected in file. Exiting.")
     else:
         df = dfs[0]
     assert isinstance(df, pd.DataFrame)
-    return (
-        df,
-        args.verb,
-        args.imputer_strat,
-        args.plotmode,
-    )
+    return (df, args.verb, args.imputer_strat, args.plotmode)
 
 
 def check_input(filenames, imputer_strat, verb):
