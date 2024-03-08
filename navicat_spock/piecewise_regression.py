@@ -72,6 +72,8 @@ class NextBreakpoints:
         self.r_squared = None
         self.adjusted_r_squared = None
         self.bic = None
+        self.bic_w = None
+        self.aic_w = None
 
         self.calculate_r_squared()
         self.calculate_bayesian_information_criterion()
@@ -321,6 +323,8 @@ class NextBreakpoints:
         k = 2 + 2 * self.n_breakpoints  # No. model parameters
         rss = self.residual_sum_squares
         self.bic = n * np.log(rss / n) + k * np.log(n)
+        self.bic_w = k * np.log(n) - 2 * np.log(rss / n)
+        self.aic_w = 2 * k - 2 * np.log(rss / n)
 
 
 class Muggeo:
@@ -734,12 +738,16 @@ class Fit:
         if self.best_muggeo:
             results["estimates"] = self.best_muggeo.best_fit.estimates
             results["bic"] = self.best_muggeo.best_fit.bic
+            results["bic_w"] = self.best_muggeo.best_fit.bic_w
+            results["aic_w"] = self.best_muggeo.best_fit.aic_w
             results["rss"] = self.best_muggeo.best_fit.residual_sum_squares
             results["converged"] = True
         else:
             results["converged"] = False
             results["estimates"] = None
             results["bic"] = None
+            results["bic_w"] = None
+            results["aic_w"] = None
             results["rss"] = None
         return results
 
@@ -1219,11 +1227,11 @@ class ModelSelection:
         double_line = "=" * line_length + "\n"
         single_line = "-" * line_length + "\n"
 
-        table_header_template = "{:<15} {:>12} {:>12} {:>12} \n"
+        table_header_template = "{:<15} {:>12} {:>12} {:>12} {:>12} {:>12}\n"
         table_header = table_header_template.format(
-            "n_breakpoints", "BIC", "converged", "RSS"
+            "n_breakpoints", "BIC", "BIC_w", "AIC_w", "converged", "RSS"
         )
-        table_row_template = "{:<15} {:>12.5} {:>12} {:>12.5} \n"
+        table_row_template = "{:<15} {:>12.5} {:>12.5} {:>12.5} {:>12} {:>12.5}\n"
 
         table_contents = header
         table_contents += double_line
@@ -1236,12 +1244,16 @@ class ModelSelection:
                 model_row = table_row_template.format(
                     model_summary["n_breakpoints"],
                     model_summary["bic"],
+                    model_summary["bic_w"],
+                    model_summary["aic_w"],
                     str(model_summary["converged"]),
                     model_summary["rss"],
                 )
             else:
                 model_row = table_row_template.format(
                     model_summary["n_breakpoints"],
+                    "",
+                    "",
                     "",
                     str(model_summary["converged"]),
                     "",
@@ -1269,10 +1281,14 @@ class ModelSelection:
         # Calcualte BIC
         n = len(xx)  # No. data points
         k = 2  # No. parameters
+        bic_w = k * np.log(n) - 2 * np.log(rss / n)
+        aic_w = 2 * k - 2 * np.log(rss / n)
         bic = n * np.log(rss / n) + k * np.log(n)
 
         fit_data = {
             "bic": bic,
+            "bic_w": bic_w,
+            "aic_w": aic_w,
             "n_breakpoints": 0,
             "estimates": {},
             "converged": True,

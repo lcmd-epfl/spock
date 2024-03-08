@@ -3,9 +3,11 @@
 import argparse
 import itertools
 import os
+import sys
 import re
 import sklearn as sk
 from itertools import cycle
+from io import StringIO
 
 import numpy as np
 import pandas as pd
@@ -45,6 +47,18 @@ def call_imputer(a, b, imputer_strat="iterative"):
         return a
 
 
+def capturing(list):
+    def __enter__(self):
+        self._stdout = sys.stdout
+        sys.stdout = self._stringio = StringIO()
+        return self
+
+    def __exit__(self, *args):
+        self.extend(self._stringio.getvalue().splitlines())
+        del self._stringio  # free up some memory
+        sys.stdout = self._stdout
+
+
 def namefixer(filename):
     return re.sub("[^a-zA-Z0-9 \n\.]", "_", filename).replace(" ", "_")
 
@@ -55,7 +69,7 @@ def reweighter(target):
     rescaled = [(py - min(target)) + std for py in target]
     normalized = [(py / max(abs(target))) for py in rescaled]
     weights = np.round(
-        np.array([py ** 2 for py in normalized]), decimals=2
+        np.array([py ** 4 for py in normalized]), decimals=2
     )  # **2 at least, could be increased
     return weights
 
