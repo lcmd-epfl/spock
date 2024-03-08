@@ -49,6 +49,17 @@ def namefixer(filename):
     return re.sub("[^a-zA-Z0-9 \n\.]", "_", filename).replace(" ", "_")
 
 
+def reweighter(target):
+    std = target.std()
+    norm = sum(target)  # Not needed since robust regression will normalize
+    rescaled = [(py - min(target)) + std for py in target]
+    normalized = [(py / max(abs(target))) for py in rescaled]
+    weights = np.round(
+        np.array([py ** 2 for py in normalized]), decimals=2
+    )  # **2 at least, could be increased
+    return weights
+
+
 def curate_d(d, descriptors, cb, ms, names, imputer_strat="none", verb=0):
     assert isinstance(d, np.ndarray)
     curated_d = np.zeros_like(d)

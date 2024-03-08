@@ -11,7 +11,7 @@ import sklearn as sk
 import sklearn.linear_model
 
 from navicat_spock.exceptions import MissingDataError
-from navicat_spock.helpers import bround
+from navicat_spock.helpers import bround, namefixer
 
 
 def calc_ci(resid, n, dof, x, x2, y2):
@@ -188,4 +188,53 @@ def plot_2d(
     plt.yticks(np.arange(ymin, ymax + 0.1, ybase))
     plt.savefig(filename)
     matplotlib.use("QtAgg")
+    return fig
+
+
+def plot_and_save(pw_fit, tags, idx, tidx, cb, ms, plotmode):
+    # fig = plot_and_save(pw_fit, tags, idx, tidx)
+    x = pw_fit.xx
+    y = pw_fit.yy
+    xint = np.linspace(min(pw_fit.xx), max(pw_fit.xx), 250)
+    xbase = bround(np.abs(max(pw_fit.xx) - min(pw_fit.xx)) / 10, type="max")
+    ybase = bround(np.abs(max(pw_fit.yy) - min(pw_fit.yy)) / 10, type="max")
+    final_params = pw_fit.best_muggeo.best_fit.raw_params
+    breakpoints = pw_fit.best_muggeo.best_fit.next_breakpoints
+
+    # Extract what we need from params
+    intercept_hat = final_params[0]
+    alpha_hat = final_params[1]
+    beta_hats = final_params[2 : 2 + len(breakpoints)]
+
+    # Build the fit plot segment by segment
+    yint = intercept_hat + alpha_hat * xint
+    for bp_count in range(len(breakpoints)):
+        yint += beta_hats[bp_count] * np.maximum(xint - breakpoints[bp_count], 0)
+    fig = plot_2d(
+        xint,
+        yint,
+        x,
+        y,
+        xmin=min(pw_fit.xx),
+        xmax=max(pw_fit.xx),
+        xbase=xbase,
+        ybase=ybase,
+        xlabel=tags[idx],
+        ylabel=tags[tidx],
+        cb=cb,
+        ms=ms,
+        plotmode=plotmode,
+        filename=f"{namefixer(tags[idx].strip())}_volcano.png",
+    )
+
+    # Pass in standard matplotlib keywords to control any of the plots
+    # pw_fit.plot_breakpoints()
+    # pw_fit.plot_breakpoint_confidence_intervals()
+
+    # Print to file
+    zdata = list(zip(xint, yint))
+    csvname = f"{namefixer(tags[idx].strip())}_volcano.csv"
+    np.savetxt(
+        csvname, zdata, fmt="%.4e", delimiter=",", header="{tags[idx]},{tags[tidx]}"
+    )
     return fig
