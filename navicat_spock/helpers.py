@@ -47,7 +47,7 @@ def call_imputer(a, b, imputer_strat="iterative"):
         return a
 
 
-def capturing(list):
+def Capturing(list):
     def __enter__(self):
         self._stdout = sys.stdout
         sys.stdout = self._stringio = StringIO()

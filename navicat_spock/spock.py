@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import sys
+import traceback
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -11,7 +12,6 @@ from navicat_spock.helpers import (
     bround,
     namefixer,
     reweighter,
-    capturing,
 )
 from navicat_spock.exceptions import InputError, ConvergenceError
 from navicat_spock.piecewise_regression import ModelSelection, Fit
@@ -71,14 +71,13 @@ def run_spock_from_args(df, verb=0, imputer_strat="none", plotmode=1):
             if verb > 0:
                 print(f"Attempting fit with descriptor index {idx}: {tags[idx]}...:")
             descriptor = d[:, idx].reshape(-1)
-            with capturing as output_msel:
-                msel = ModelSelection(
-                    descriptor,
-                    target,
-                    max_breakpoints=3,
-                    max_iterations=250,
-                    weights=weights,
-                )
+            msel = ModelSelection(
+                descriptor,
+                target,
+                max_breakpoints=3,
+                max_iterations=250,
+                weights=weights,
+            )
             bic_list = np.array(
                 [summary["bic"] for summary in msel.model_summaries], dtype=float
             )
@@ -118,6 +117,7 @@ def run_spock_from_args(df, verb=0, imputer_strat="none", plotmode=1):
                     # Plot the data, fit, breakpoints and confidence intervals
                     _ = plot_and_save(pw_fit, tags, idx, tidx, cb, ms, plotmode)
         except Exception as m:
+            traceback.print_exc()
             best_bics[i] = np.inf
             if verb > 0:
                 print(
