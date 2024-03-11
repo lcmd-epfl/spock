@@ -58,7 +58,10 @@ def run_spock_from_args(df, wp=2, verb=0, imputer_strat="none", plotmode=1):
 
     # Your data might contain outliers (human error, computation error) or missing points.
     # We will attempt to curate your data automatically.
-    d, cb, ms, names = curate_d(d, descriptors, cb, ms, names, imputer_strat, verb=verb)
+    try:
+        d, cb, ms, names = curate_d(d, descriptors, cb, ms, names, imputer_strat, verb=verb)
+    except Exception as m:
+        continue
 
     # Target data
     target = d[:, tidx]  # .reshape(-1)

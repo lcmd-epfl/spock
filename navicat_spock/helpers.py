@@ -221,7 +221,7 @@ def processargs(arguments):
 
     dfs = check_input(args.filenames, args.wp, args.imputer_strat, args.verb)
     if len(dfs) == 0:
-        raise InputError("No input profiles detected in file. Exiting.")
+        raise InputError("No input data detected. Exiting.")
     else:
         df = dfs[0]
     assert isinstance(df, pd.DataFrame)
