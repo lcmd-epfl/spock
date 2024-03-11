@@ -311,7 +311,7 @@ class NextBreakpoints:
     def calculate_bayesian_information_criterion(self):
         """
         Calculates the Bayesian Information Criterion of the fitted model.
-        Assuming normal noise, uses the standard version for OLS models.
+        Assuming normal noise, uses the standard version for WLS models.
         This should hold for breakpoint regression models, because the BIC
         is based on the likelihood of the data
         given the model. That likelihood function doesn't involve the
@@ -1033,7 +1033,7 @@ class Fit:
     def summary(self):
         """
         Print a summary of the best fit, along the lines of the summary
-        given by python's statsmodels OLS fit.
+        given by python's statsmodels WLS fit.
         """
 
         if not self.best_muggeo:
@@ -1269,7 +1269,7 @@ class ModelSelection:
         Z = np.array([xx])
         Z = Z.T
         Z = sm.add_constant(Z, has_constant="add")
-        # Basic OLS fit
+        # Basic WLS fit
         results = sm.WLS(endog=np.array(yy), exog=Z, weights=weights).fit()
 
         # get the predicted values

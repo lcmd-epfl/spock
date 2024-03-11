@@ -78,7 +78,7 @@ def run_spock_from_args(df, wp=2, verb=0, imputer_strat="none", plotmode=1):
             msel = ModelSelection(
                 descriptor,
                 target,
-                max_breakpoints=3,
+                max_breakpoints=2,
                 max_iterations=n_iter_helper(fitted),
                 weights=weights,
             )
@@ -154,36 +154,52 @@ def run_spock_from_args(df, wp=2, verb=0, imputer_strat="none", plotmode=1):
                     f"Fit did not converge with descriptor index {idx}: {tags[idx]}\n due to {m}"
                 )
     filter_0s = np.nonzero(best_n)
-    best_bics = best_bics[filter_0s]
-    best_n = best_n[filter_0s]
-    if verb > 3 and any(best_n):
+    best_bics_nz = best_bics[filter_0s]
+    best_n_nz = best_n[filter_0s]
+    if verb > 3 and any(best_n_nz):
         print(
-            f"Out of all descriptors, the list of BICs for the n breakpoints are:\n {best_bics} for\n {best_n}"
+            f"Out of all descriptors, the list of BICs for the n>0 breakpoints are:\n {best_bics} for\n {best_n}"
         )
     if any(best_bics) and any(best_n):
-        idx = idxs[np.argmin(best_bics)]
-        n = int(best_n[np.argmin(best_bics)])
-        if verb > 3:
-            print(
-                f"Attempting fit with {n} breakpoints and desctiptor index {idx}: {tags[idx]}, as determined from BIC"
+        if any(best_n_nz):
+            min_bic = np.min(best_bics_nz)
+            n = int(best_n[np.where(best_bics == min_bic)[0][0]])
+            idx = idxs[np.where(best_bics == min_bic)[0][0]]
+            if verb > 3:
+                print(
+                    f"Removing n=0 solutions, {n} breakpoints for index {idx}: {tags[idx]} will be used."
+                )
+            if verb > 1:
+                print(
+                    f"Fitting volcano with {n} breakpoints and descriptor index {idx}: {tags[idx]}, as determined from BIC."
+                )
+            descriptor = d[:, idx].reshape(-1)
+            pw_fit = Fit(
+                descriptor,
+                target,
+                n_breakpoints=n,
+                weights=weights,
+                max_iterations=5000,
             )
-        descriptor = d[:, idx].reshape(-1)
-        pw_fit = Fit(
-            descriptor,
-            target,
-            n_breakpoints=n,
-            weights=weights,
-            max_iterations=n_iter_helper(False),
-        )
-        if not pw_fit.best_muggeo:
-            raise ConvergenceError("The fitting process did not converge.")
-        if verb > 2:
-            pw_fit.summary()
-        # Plot the data, fit, breakpoints and confidence intervals
-        fig = plot_and_save(pw_fit, tags, idx, tidx, cb, ms, plotmode)
-        plt.show()
+            if not pw_fit.best_muggeo:
+                raise ConvergenceError("The fitting process did not converge.")
+            if verb > 2:
+                pw_fit.summary()
+            # Plot the data, fit, breakpoints and confidence intervals
+            fig = plot_and_save(pw_fit, tags, idx, tidx, cb, ms, plotmode)
+            plt.show()
+        else:
+            min_bic = np.min(best_bics)
+            idx = idxs[np.argmin(best_bics)]
+            n = int(best_n[np.argmin(best_bics)])
+            if verb > 3:
+                print(
+                    f"Considering n=0 solutions, {n} breakpoints for index {idx}: {tags[idx]} should be used. This does not correspond to a volcano. Exiting!"
+                )
+            exit()
     else:
-        print("None of the descriptors could be fit to a volcano shape. Exiting!")
+        print("None of the descriptors could be fit whatsoever. Exiting!")
+        exit()
 
 
 if __name__ == "__main__":
