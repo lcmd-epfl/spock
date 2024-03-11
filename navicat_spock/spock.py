@@ -61,7 +61,7 @@ def run_spock_from_args(df, wp=2, verb=0, imputer_strat="none", plotmode=1):
     try:
         d, cb, ms, names = curate_d(d, descriptors, cb, ms, names, imputer_strat, verb=verb)
     except Exception as m:
-        continue
+        pass
 
     # Target data
     target = d[:, tidx]  # .reshape(-1)
