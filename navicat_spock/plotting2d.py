@@ -16,7 +16,7 @@ from navicat_spock.helpers import bround, namefixer
 
 def calc_ci(resid, n, dof, x, x2, y2):
     t = stats.t.ppf(0.95, dof)
-    s_err = np.sqrt(np.sum(resid ** 2) / dof)
+    s_err = np.sqrt(np.sum(resid**2) / dof)
 
     ci = (
         t

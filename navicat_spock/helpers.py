@@ -84,7 +84,7 @@ def reweighter(target, wp=2):
     scaled = [(py / max(abs(target))) for py in rescaled]
     # print(scaled)
     weights = np.round(
-        np.array([py ** wp for py in scaled]), decimals=6
+        np.array([py**wp for py in scaled]), decimals=6
     )  # **2 at least, could be increased
     weights = normalize(weights).reshape(-1)
     return weights

@@ -59,7 +59,9 @@ def run_spock_from_args(df, wp=2, verb=0, imputer_strat="none", plotmode=1):
     # Your data might contain outliers (human error, computation error) or missing points.
     # We will attempt to curate your data automatically.
     try:
-        d, cb, ms, names = curate_d(d, descriptors, cb, ms, names, imputer_strat, verb=verb)
+        d, cb, ms, names = curate_d(
+            d, descriptors, cb, ms, names, imputer_strat, verb=verb
+        )
     except Exception as m:
         pass
 
@@ -78,12 +80,14 @@ def run_spock_from_args(df, wp=2, verb=0, imputer_strat="none", plotmode=1):
             if verb > 0:
                 print(f"Attempting fit with descriptor index {idx}: {tags[idx]}...:")
             descriptor = d[:, idx].reshape(-1)
+            xrange = 0.05 * (max(descriptor) - min(descriptor))
             msel = ModelSelection(
                 descriptor,
                 target,
                 max_breakpoints=2,
                 max_iterations=n_iter_helper(fitted),
                 weights=weights,
+                tolerance=xrange,
             )
             bic_list = np.array(
                 [summary["bic"] for summary in msel.model_summaries], dtype=float
@@ -141,6 +145,7 @@ def run_spock_from_args(df, wp=2, verb=0, imputer_strat="none", plotmode=1):
                     n_breakpoints=n,
                     weights=weights,
                     max_iterations=n_iter_helper(False),
+                    tolerance=xrange,
                 )
                 if verb > 2:
                     pw_fit.summary()
@@ -177,12 +182,14 @@ def run_spock_from_args(df, wp=2, verb=0, imputer_strat="none", plotmode=1):
                     f"Fitting volcano with {n} breakpoints and descriptor index {idx}: {tags[idx]}, as determined from BIC."
                 )
             descriptor = d[:, idx].reshape(-1)
+            xrange = 0.05 * (max(descriptor) - min(descriptor))
             pw_fit = Fit(
                 descriptor,
                 target,
                 n_breakpoints=n,
                 weights=weights,
                 max_iterations=5000,
+                tolerance=xrange,
             )
             if not pw_fit.best_muggeo:
                 raise ConvergenceError("The fitting process did not converge.")

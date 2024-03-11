@@ -188,7 +188,7 @@ class NextBreakpoints:
                 gamma_var
                 + beta_var * (gamma / beta) ** 2
                 - 2 * (gamma / beta) * gamma_beta_covar
-            ) / (beta ** 2)
+            ) / (beta**2)
             bp_vars.append(bp_var)
 
         bp_ses = np.sqrt(bp_vars)
@@ -383,7 +383,7 @@ class Muggeo:
         verbose=False,
         max_iterations=30,  # Positive int. Maximum iterations of
         # Muggeo algorithm if not converged
-        tolerance=10 ** -5,  # Positive float. If breakpoints change
+        tolerance=10**-2,  # Positive float. If breakpoints change
         # less than the tolerance then the algorithm has converged
         # Positive float. The minimum required distance between
         # breakpoints, as a proportion of the data range.
@@ -664,7 +664,7 @@ class Fit:
         verbose=False,
         max_iterations=30,  # Positive int. Maximum iterations of
         # Muggeo algorithm if not converged
-        tolerance=10 ** -5,  # Positive float. If breakpoints change
+        tolerance=10**-2,  # Positive float. If breakpoints change
         # less than the tolerance then the algorithm has converged
         # Positive float. The minimum required distance between
         # breakpoints, as a proportion of the data range.
@@ -1179,7 +1179,7 @@ class ModelSelection:
         max_breakpoints=10,
         n_boot=100,
         max_iterations=30,
-        tolerance=10 ** -5,
+        tolerance=10**-2,
         min_distance_between_breakpoints=0.01,
         min_distance_to_edge=0.02,
         weights=1.0,
