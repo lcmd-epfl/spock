@@ -112,7 +112,7 @@ def run_spock_from_args(df, wp=2, verb=0, imputer_strat="none", plotmode=1):
                     print(
                         f"After zero removal, the list of BICs for the n breakpoints are:\n {bic_list} for\n {n_list}"
                     )
-                if bic_list:
+                if not any(bic_list):
                     n = int(n_list[np.argmin(bic_list)])
                     if n > 0:
                         fitted = True
