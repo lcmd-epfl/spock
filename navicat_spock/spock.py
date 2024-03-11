@@ -141,6 +141,10 @@ def run_spock_from_args(df, wp=2, verb=0, imputer_strat="none", plotmode=1):
                 print(
                     f"Fit did not converge with descriptor index {idx}: {tags[idx]}\n due to {m}"
                 )
+    if verb > 3:
+        print(
+            f"Out of all descriptors, the list of BICs for the n breakpoints are:\n {best_bics} for\n {best_n}"
+        )
     if any(best_bics != 0) and any(best_n != 0):
         idx = idxs[np.argmin(best_bics)]
         n = int(best_n[np.argmin(best_bics)])
