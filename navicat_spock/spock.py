@@ -93,6 +93,7 @@ def run_spock_from_args(df, wp=2, verb=0, imputer_strat="none", plotmode=1):
             bic_list = bic_list[filter_nan]
             n_list = n_list[filter_nan]
             n = int(n_list[np.argmin(bic_list)])
+            min_bic = np.min(bic_list)
             if verb > 3:
                 print(
                     f"The list of BICs for the n breakpoints are:\n {bic_list} for\n {n_list}"
@@ -104,6 +105,12 @@ def run_spock_from_args(df, wp=2, verb=0, imputer_strat="none", plotmode=1):
                     print(
                         f"BIC seems to indicate that a linear fit is better than a volcano fit. Warning!"
                     )
+                    if verb > 3:
+                        print(
+                            f"Adding {n} as the best BIC for this descriptor.\nAdding {min_bic} as the best BIC for this descriptor."
+                        )
+                    best_bics[i] = min_bic
+                    best_n[i] = n
             else:
                 filter_0s = np.nonzero(n_list)
                 bic_list = bic_list[filter_0s]
@@ -112,11 +119,16 @@ def run_spock_from_args(df, wp=2, verb=0, imputer_strat="none", plotmode=1):
                     print(
                         f"After zero removal, the list of BICs for the n breakpoints are:\n {bic_list} for\n {n_list}"
                     )
-                if not any(bic_list):
+                if any(bic_list):
                     n = int(n_list[np.argmin(bic_list)])
                     if n > 0:
+                        min_bic = np.min(bic_list)
+                        if verb > 3:
+                            print(
+                                f"Adding {n} as the best BIC for this descriptor.\nAdding {min_bic} as the best BIC for this descriptor."
+                            )
                         fitted = True
-                        best_bics[i] = np.min(bic_list)
+                        best_bics[i] = min_bic
                         best_n[i] = n
             if prefit and verb > 1:
                 # Fit piecewise regression!
@@ -141,11 +153,14 @@ def run_spock_from_args(df, wp=2, verb=0, imputer_strat="none", plotmode=1):
                 print(
                     f"Fit did not converge with descriptor index {idx}: {tags[idx]}\n due to {m}"
                 )
-    if verb > 3:
+    filter_0s = np.nonzero(best_n)
+    best_bics = best_bics[filter_0s]
+    best_n = best_n[filter_0s]
+    if verb > 3 and any(best_n):
         print(
             f"Out of all descriptors, the list of BICs for the n breakpoints are:\n {best_bics} for\n {best_n}"
         )
-    if any(best_bics != 0) and any(best_n != 0):
+    if any(best_bics) and any(best_n):
         idx = idxs[np.argmin(best_bics)]
         n = int(best_n[np.argmin(best_bics)])
         if verb > 3:
