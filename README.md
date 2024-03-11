@@ -1,10 +1,13 @@
 spock: Volcano Plot Fitting Tool
 ==============================================
+
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/rlaplaza/spock/HEAD?labpath=App.ipynb)
 <!---
 [![DOI](https://zenodo.org/badge/381737392.svg)](https://zenodo.org/badge/latestdoi/381737392)
 
 ![volcanic logo](./images/volcanic_logo.png)
 [![PyPI version](https://badge.fury.io/py/navicat_volcanic.svg)](https://badge.fury.io/py/navicat_volcanic)
+
 
 ## Contents
 * [About](#about-)
