@@ -12,6 +12,7 @@ from navicat_spock.helpers import (
     bround,
     namefixer,
     reweighter,
+    n_iter_helper,
 )
 from navicat_spock.exceptions import InputError, ConvergenceError
 from navicat_spock.piecewise_regression import ModelSelection, Fit
@@ -19,12 +20,13 @@ from navicat_spock.plotting2d import plot_and_save
 
 
 def run_spock():
-    (df, verb, imputer_strat, plotmode) = processargs(sys.argv[1:])
-    run_spock_from_args(df, verb, imputer_strat, plotmode)
+    (df, wp, verb, imputer_strat, plotmode) = processargs(sys.argv[1:])
+    run_spock_from_args(df, wp, verb, imputer_strat, plotmode)
 
 
-def run_spock_from_args(df, verb=0, imputer_strat="none", plotmode=1):
+def run_spock_from_args(df, wp=2, verb=0, imputer_strat="none", plotmode=1):
     prefit = False
+    fitted = False
     if verb > 0:
         print(
             f"spock will assume that {df.columns[0]} contains names/IDs of catalysts/samples."
@@ -43,7 +45,9 @@ def run_spock_from_args(df, verb=0, imputer_strat="none", plotmode=1):
     for i, tag in enumerate(tags):
         if "TARGET" in tag.upper():
             if verb > 0:
-                print(f"Assuming field {tag} corresponds to the TARGET (y-axis).")
+                print(
+                    f"Assuming field {tag} corresponds to the TARGET (y-axis), which will be weighted with power {wp}."
+                )
             tidx = i
         else:
             if verb > 0:
@@ -58,7 +62,7 @@ def run_spock_from_args(df, verb=0, imputer_strat="none", plotmode=1):
 
     # Target data
     target = d[:, tidx]  # .reshape(-1)
-    weights = reweighter(target)
+    weights = reweighter(target, wp)
     if verb > 4:
         print("Weights for the regression of the target are:")
         for y, w in zip(target, weights):
@@ -75,7 +79,7 @@ def run_spock_from_args(df, verb=0, imputer_strat="none", plotmode=1):
                 descriptor,
                 target,
                 max_breakpoints=3,
-                max_iterations=250,
+                max_iterations=n_iter_helper(fitted),
                 weights=weights,
             )
             bic_list = np.array(
@@ -89,17 +93,31 @@ def run_spock_from_args(df, verb=0, imputer_strat="none", plotmode=1):
             bic_list = bic_list[filter_nan]
             n_list = n_list[filter_nan]
             n = int(n_list[np.argmin(bic_list)])
-            best_bics[i] = np.min(bic_list)
-            best_n[i] = n
+            if verb > 3:
+                print(
+                    f"The list of BICs for the n breakpoints are:\n {bic_list} for\n {n_list}"
+                )
             if verb > 2:
                 print(f"The best number of breakpoints according to BIC is {n}")
-            if n < 1 and verb > 0:
-                print(
-                    f"The best number of breakpoints is less than 1 because the algorithm could not converge. Exiting!"
-                )
-                raise ConvergenceError(
-                    "Algorithm did not converge for any number of breaking points."
-                )
+            if n < 1:
+                if verb > 1:
+                    print(
+                        f"BIC seems to indicate that a linear fit is better than a volcano fit. Warning!"
+                    )
+            else:
+                filter_0s = np.nonzero(n_list)
+                bic_list = bic_list[filter_0s]
+                n_list = n_list[filter_0s]
+                if verb > 3:
+                    print(
+                        f"After zero removal, the list of BICs for the n breakpoints are:\n {bic_list} for\n {n_list}"
+                    )
+                if bic_list:
+                    n = int(n_list[np.argmin(bic_list)])
+                    if n > 0:
+                        fitted = True
+                        best_bics[i] = np.min(bic_list)
+                        best_n[i] = n
             if prefit and verb > 1:
                 # Fit piecewise regression!
                 pw_fit = Fit(
@@ -107,7 +125,7 @@ def run_spock_from_args(df, verb=0, imputer_strat="none", plotmode=1):
                     target,
                     n_breakpoints=n,
                     weights=weights,
-                    max_iterations=250,
+                    max_iterations=n_iter_helper(False),
                 )
                 if verb > 2:
                     pw_fit.summary()
@@ -123,14 +141,20 @@ def run_spock_from_args(df, verb=0, imputer_strat="none", plotmode=1):
                 print(
                     f"Fit did not converge with descriptor index {idx}: {tags[idx]}\n due to {m}"
                 )
-    if any(best_bics != 0):
+    if any(best_bics != 0) and any(best_n != 0):
         idx = idxs[np.argmin(best_bics)]
         n = int(best_n[np.argmin(best_bics)])
         if verb > 3:
-            print(f"Attempting fit with {n} breakpoints as determined from BIC")
+            print(
+                f"Attempting fit with {n} breakpoints and desctiptor index {idx}: {tags[idx]}, as determined from BIC"
+            )
         descriptor = d[:, idx].reshape(-1)
         pw_fit = Fit(
-            descriptor, target, n_breakpoints=n, weights=weights, max_iterations=250
+            descriptor,
+            target,
+            n_breakpoints=n,
+            weights=weights,
+            max_iterations=n_iter_helper(False),
         )
         if not pw_fit.best_muggeo:
             raise ConvergenceError("The fitting process did not converge.")
@@ -139,6 +163,8 @@ def run_spock_from_args(df, verb=0, imputer_strat="none", plotmode=1):
         # Plot the data, fit, breakpoints and confidence intervals
         fig = plot_and_save(pw_fit, tags, idx, tidx, cb, ms, plotmode)
         plt.show()
+    else:
+        print("None of the descriptors could be fit to a volcano shape. Exiting!")
 
 
 if __name__ == "__main__":

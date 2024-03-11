@@ -47,6 +47,13 @@ def call_imputer(a, b, imputer_strat="iterative"):
         return a
 
 
+def n_iter_helper(ok):
+    if ok:
+        return 200
+    if not ok:
+        return 1000
+
+
 def Capturing(list):
     def __enter__(self):
         self._stdout = sys.stdout
@@ -63,14 +70,23 @@ def namefixer(filename):
     return re.sub("[^a-zA-Z0-9 \n\.]", "_", filename).replace(" ", "_")
 
 
-def reweighter(target):
+def normalize(a, axis=-1, order=2):
+    l2 = np.atleast_1d(np.linalg.norm(a, order, axis))
+    l2[l2 == 0] = 1
+    return a / np.expand_dims(l2, axis)
+
+
+def reweighter(target, wp=2):
     std = target.std()
     norm = sum(target)  # Not needed since robust regression will normalize
     rescaled = [(py - min(target)) + std for py in target]
-    normalized = [(py / max(abs(target))) for py in rescaled]
+    # print(rescaled)
+    scaled = [(py / max(abs(target))) for py in rescaled]
+    # print(scaled)
     weights = np.round(
-        np.array([py ** 4 for py in normalized]), decimals=2
+        np.array([py ** wp for py in scaled]), decimals=6
     )  # **2 at least, could be increased
+    weights = normalize(weights).reshape(-1)
     return weights
 
 
@@ -165,6 +181,16 @@ def processargs(arguments):
         help="Filename containing catalyst data. Target metric (y-axis) should be labeled as TARGET in column name. See documentation for input and file formatting questions.",
     )
     vbuilder.add_argument(
+        "-wp",
+        "--wp",
+        "-weights",
+        "--weights",
+        dest="wp",
+        type=int,
+        default=2,
+        help="In the regression, integer power with which higher activity points are weighted. Higher means low activity points are given less priority in the fit (default: 2)",
+    )
+    vbuilder.add_argument(
         "-v",
         "--v",
         "--verb",
@@ -193,16 +219,16 @@ def processargs(arguments):
     )
     args = vbuilder.parse_args(arguments)
 
-    dfs = check_input(args.filenames, args.imputer_strat, args.verb)
+    dfs = check_input(args.filenames, args.wp, args.imputer_strat, args.verb)
     if len(dfs) == 0:
         raise InputError("No input profiles detected in file. Exiting.")
     else:
         df = dfs[0]
     assert isinstance(df, pd.DataFrame)
-    return (df, args.verb, args.imputer_strat, args.plotmode)
+    return (df, args.wp, args.verb, args.imputer_strat, args.plotmode)
 
 
-def check_input(filenames, imputer_strat, verb):
+def check_input(filenames, wp, imputer_strat, verb):
     accepted_excel_terms = ["xls", "xlsx"]
     accepted_imputer_strats = ["simple", "knn", "iterative", "none"]
     accepted_nds = [1, 2]
@@ -222,4 +248,6 @@ def check_input(filenames, imputer_strat, verb):
         )
     if not isinstance(verb, int):
         raise InputError("Invalid verbosity input! Should be a positive integer or 0.")
+    if not wp > 0 and isinstance(wp, int):
+        raise InputError("Invalid weighting power input! Should be a positive integer.")
     return dfs
