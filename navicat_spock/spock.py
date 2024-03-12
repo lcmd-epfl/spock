@@ -21,7 +21,7 @@ from navicat_spock.plotting2d import plot_and_save
 
 def run_spock():
     (df, wp, verb, imputer_strat, plotmode) = processargs(sys.argv[1:])
-    run_spock_from_args(df, wp, verb, imputer_strat, plotmode)
+    _ = run_spock_from_args(df, wp, verb, imputer_strat, plotmode)
 
 
 def run_spock_from_args(df, wp=2, verb=0, imputer_strat="none", plotmode=1):
@@ -198,6 +198,7 @@ def run_spock_from_args(df, wp=2, verb=0, imputer_strat="none", plotmode=1):
             # Plot the data, fit, breakpoints and confidence intervals
             fig = plot_and_save(pw_fit, tags, idx, tidx, cb, ms, plotmode)
             plt.show()
+            return fig
         else:
             min_bic = np.min(best_bics)
             idx = idxs[np.argmin(best_bics)]
