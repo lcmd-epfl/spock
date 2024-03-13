@@ -4,12 +4,11 @@ import matplotlib
 import numpy as np
 import scipy.stats as stats
 import matplotlib
+import os
 
-matplotlib.use("Agg")
+if os.name == "posix" and "DISPLAY" not in os.environ:
+    matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import sklearn as sk
-import sklearn.linear_model
-
 from navicat_spock.exceptions import MissingDataError
 from navicat_spock.helpers import bround, namefixer
 
@@ -187,7 +186,8 @@ def plot_2d(
     plt.ylim(ymin, ymax)
     plt.yticks(np.arange(ymin, ymax + 0.1, ybase))
     plt.savefig(filename)
-    matplotlib.use("QtAgg")
+    if os.name != "posix" and "DISPLAY" in os.environ:
+        plt.show()
     return fig
 
 

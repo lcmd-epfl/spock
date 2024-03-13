@@ -197,7 +197,6 @@ def run_spock_from_args(df, wp=2, verb=0, imputer_strat="none", plotmode=1):
                 pw_fit.summary()
             # Plot the data, fit, breakpoints and confidence intervals
             fig = plot_and_save(pw_fit, tags, idx, tidx, cb, ms, plotmode)
-            plt.show()
             return fig
         else:
             min_bic = np.min(best_bics)
