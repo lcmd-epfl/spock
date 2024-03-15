@@ -47,6 +47,56 @@ def call_imputer(a, b, imputer_strat="iterative"):
         return a
 
 
+def augment(df, level, verb=0):
+    y = df.iloc[:, 0:2]
+    x_full = df.iloc[:, 2:]
+    if verb > 6:
+        print(y.head())
+        print(x_full.head())
+    if level > 0:
+        if verb > 0:
+            print(f"Doing level 1 feature augmentation...")
+        for i in x_full.keys():
+            inv = f"1/{i}"
+            pow2 = f"{i}^2"
+            # pow3 = f"{i}^3"
+            sqrt = f"sqrt({i})"
+            # log = f"log({i})"
+            x_full[inv] = 1 / x_full[i]
+            x_full[pow2] = x_full[i] ** 2
+            # x_full[pow3] = x_full[i] ** 3
+            if not (x_full[i].values < 0).any():
+                x_full[sqrt] = np.sqrt(x_full[i])
+                # x_full[log] = np.log(x_full[i])
+            if not (abs(x_full[i].values) < 0.01).any():
+                x_full[inv] = 1 / x_full[i]
+    if level > 1:
+        if verb > 0:
+            print(f"Doing level 2 feature augmentation...")
+        for i, j in zip(x_full.keys(), x_full.keys()[1:]):
+            prod = f"{i}x{j}"
+            div12 = f"{i}/{j}"
+            div21 = f"{j}/{i}"
+            x_full[prod] = x_full[i] * x_full[j]
+            if "1/" not in i and "1/" not in j:
+                x_full[div12] = x_full[i] / x_full[j]
+                x_full[div21] = x_full[j] / x_full[i]
+    if verb > 6:
+        print(y.head())
+        print(x_full.head())
+    df = pd.concat([y, x_full], axis=1)
+    if verb > 6:
+        print(df.head())
+    return clean_df(df)
+
+
+def clean_df(df):
+    assert isinstance(df, pd.DataFrame)
+    df.replace([np.inf, -np.inf], np.nan, inplace=True)
+    df.dropna(inplace=True, how="any", axis=1)
+    return df
+
+
 def n_iter_helper(ok):
     if ok:
         return 200
@@ -210,6 +260,16 @@ def processargs(arguments):
         help="Plot mode for volcano plotting. Higher is more detailed, lower is more basic. (default: 1)",
     )
     vbuilder.add_argument(
+        "-fa",
+        "--fa",
+        "-augment",
+        "--augment",
+        dest="fa",
+        type=int,
+        default=0,
+        help="Level of feature augmentation to perform. Higher is more feature augmentation, 0 is no feature augmentation. (default: 0, no augmentation)",
+    )
+    vbuilder.add_argument(
         "-is",
         "--is",
         dest="imputer_strat",
@@ -225,6 +285,8 @@ def processargs(arguments):
     else:
         df = dfs[0]
     assert isinstance(df, pd.DataFrame)
+    if args.fa > 0:
+        df = augment(df, args.fa, args.verb)
     return (df, args.wp, args.verb, args.imputer_strat, args.plotmode)
 
 
