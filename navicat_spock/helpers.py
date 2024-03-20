@@ -5,7 +5,8 @@ import itertools
 import os
 import sys
 import re
-import sklearn as sk
+import sklearn
+from sklearn import linear_model
 from itertools import cycle
 from io import StringIO
 
@@ -47,6 +48,69 @@ def call_imputer(a, b, imputer_strat="iterative"):
         return a
 
 
+def find_duplicated_columns(df):
+    dupes = []
+    df = df.round(6)
+    columns = df.columns
+    for i in range(len(columns)):
+        col1 = df.iloc[:, i]
+        for j in range(i + 1, len(columns)):
+            col2 = df.iloc[:, j]
+            # break early if dtypes aren't the same (helps deal with
+            # categorical dtypes)
+            if col1.dtype is not col2.dtype:
+                break
+            # otherwise compare values
+            if col1.equals(col2):
+                dupes.append(columns[i])
+                break
+    return dupes
+
+
+def variance_inflation_factor(exog, exog_idx):
+    """
+    exog : ndarray, (nobs, k_vars)
+        design matrix with all explanatory variables, as for example used in
+        regression
+    exog_idx : int
+        index of the exogenous variable in the columns of exog
+    """
+    k_vars = exog.shape[1]
+    x_i = exog[:, exog_idx]
+    mask = np.arange(k_vars) != exog_idx
+    x_noti = exog[:, mask]
+    if x_noti.size == 0:
+        return 1.0
+    r_squared_i = (
+        linear_model.LinearRegression()
+        .fit(x_i.reshape(-1, 1), x_noti)
+        .score(x_i.reshape(-1, 1), x_noti)
+    )
+    den = 1.0 - r_squared_i
+    tol = 0.001
+    vif = 1.0 / max(den, tol)
+    return vif
+
+
+def prune_by_vif(X, thresh=2, verb=0):
+    cols = X.columns
+    variables = np.arange(X.shape[1])
+    dropped = True
+    while dropped:
+        dropped = False
+        c = X[cols[variables]].values
+        vif = [variance_inflation_factor(c, ix) for ix in np.arange(c.shape[1])]
+        maxloc = vif.index(max(vif))
+        if max(vif) > thresh:
+            if verb > 2:
+                print(
+                    f"Dropping {X[cols[variables]].columns[maxloc]} at index {maxloc} due to variance inflation."
+                )
+            variables = np.delete(variables, maxloc)
+            dropped = True
+    return X[cols[variables]]
+
+
 def augment(df, level, verb=0):
     y = df.iloc[:, 0:2]
     x_full = df.iloc[:, 2:]
@@ -70,7 +134,7 @@ def augment(df, level, verb=0):
                 # x_full[log] = np.log(x_full[i])
             if not (abs(x_full[i].values) < 0.01).any():
                 x_full[inv] = 1 / x_full[i]
-    if level > 1:
+    if level == 2:
         if verb > 0:
             print(f"Doing level 2 feature augmentation...")
         for i, j in zip(x_full.keys(), x_full.keys()[1:]):
@@ -81,6 +145,28 @@ def augment(df, level, verb=0):
             if "1/" not in i and "1/" not in j:
                 x_full[div12] = x_full[i] / x_full[j]
                 x_full[div21] = x_full[j] / x_full[i]
+    if level == 3:
+        if verb > 0:
+            print(f"Doing level 3 feature augmentation...")
+        for i, j in itertools.combinations_with_replacement(
+            range(len(x_full.keys())), 2
+        ):
+            if i == j:
+                continue
+            i = x_full.keys()[i]
+            j = x_full.keys()[j]
+            prod = f"{i}x{j}"
+            div12 = f"{i}/{j}"
+            div21 = f"{j}/{i}"
+            x_full[prod] = x_full[i] * x_full[j]
+            if "1/" not in i and "1/" not in j:
+                x_full[div12] = x_full[i] / x_full[j]
+                x_full[div21] = x_full[j] / x_full[i]
+    # Prune redundant features based on vif, we use a very high threshold to be conservative
+    x_full = prune_by_vif(x_full, thresh=100, verb=verb)
+    # Remove almost exact duplicates from feature datafragme
+    dups = find_duplicated_columns(x_full)
+    x_full = x_full.drop(dups, axis=1)
     if verb > 6:
         print(y.head())
         print(x_full.head())
