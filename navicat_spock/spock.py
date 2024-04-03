@@ -13,6 +13,7 @@ from navicat_spock.helpers import (
     namefixer,
     reweighter,
     n_iter_helper,
+    slope_check,
 )
 from navicat_spock.exceptions import InputError, ConvergenceError
 from navicat_spock.piecewise_regression import ModelSelection, Fit
@@ -72,9 +73,11 @@ def run_spock_from_args(df, wp=2, verb=0, imputer_strat="none", plotmode=1):
         print("Weights for the regression of the target are:")
         for y, w in zip(target, weights):
             print(y, w)
+    max_breakpoints = 2
     idxs = np.where(descriptors == True)[0]
-    best_bics = np.zeros_like(idxs, dtype=float)
-    best_n = np.zeros_like(idxs, dtype=int)
+    all_bic = np.zeros((len(idxs), max_breakpoints + 1), dtype=float)
+    all_n = np.zeros((len(idxs), max_breakpoints + 1), dtype=int)
+    all_sc = np.zeros((len(idxs), max_breakpoints + 1), dtype=bool)
     for i, idx in enumerate(idxs):
         try:
             if verb > 0:
@@ -84,23 +87,29 @@ def run_spock_from_args(df, wp=2, verb=0, imputer_strat="none", plotmode=1):
             msel = ModelSelection(
                 descriptor,
                 target,
-                max_breakpoints=2,
+                max_breakpoints=max_breakpoints,
                 max_iterations=n_iter_helper(fitted),
                 weights=weights,
                 tolerance=xrange,
+                verbose=verb > 2,
             )
-            bic_list = np.array(
+            all_sc[i, :] = np.array(
+                [slope_check(summary["betas"]) for summary in msel.model_summaries],
+                dtype=bool,
+            )
+            all_bic[i, :] = np.array(
                 [summary["bic"] for summary in msel.model_summaries], dtype=float
             )
-            n_list = np.array(
+            all_n[i, :] = np.array(
                 [summary["n_breakpoints"] for summary in msel.model_summaries],
                 dtype=int,
             )
-            filter_nan = ~np.isnan(bic_list)
-            bic_list = bic_list[filter_nan]
-            n_list = n_list[filter_nan]
-            n = int(n_list[np.argmin(bic_list)])
+
+            bic_list = all_bic[i, :]
+            n_list = all_n[i, :]
+            n = n_list[np.argmin(bic_list)]
             min_bic = np.min(bic_list)
+
             if verb > 3:
                 print(
                     f"The list of BICs for the n breakpoints are:\n {bic_list} for\n {n_list}"
@@ -116,27 +125,18 @@ def run_spock_from_args(df, wp=2, verb=0, imputer_strat="none", plotmode=1):
                         print(
                             f"Adding {n} as the best BIC for this descriptor.\nAdding {min_bic} as the best BIC for this descriptor."
                         )
-                    best_bics[i] = min_bic
-                    best_n[i] = n
             else:
-                filter_0s = np.nonzero(n_list)
-                bic_list = bic_list[filter_0s]
-                n_list = n_list[filter_0s]
                 if verb > 3:
                     print(
                         f"After zero removal, the list of BICs for the n breakpoints are:\n {bic_list} for\n {n_list}"
                     )
                 if any(bic_list):
-                    n = int(n_list[np.argmin(bic_list)])
                     if n > 0:
-                        min_bic = np.min(bic_list)
                         if verb > 3:
                             print(
                                 f"Adding {n} as the best BIC for this descriptor.\nAdding {min_bic} as the best BIC for this descriptor."
                             )
                         fitted = True
-                        best_bics[i] = min_bic
-                        best_n[i] = n
             if prefit and verb > 1:
                 # Fit piecewise regression!
                 pw_fit = Fit(
@@ -156,23 +156,56 @@ def run_spock_from_args(df, wp=2, verb=0, imputer_strat="none", plotmode=1):
                     _ = plot_and_save(pw_fit, tags, idx, tidx, cb, ms, plotmode)
         except Exception as m:
             traceback.print_exc()
-            best_bics[i] = np.inf
+            all_bic[i, :] = np.inf
+            all_n[i, :] = 0
+            all_sc[i, :] = False
             if verb > 0:
                 print(
                     f"Fit did not converge with descriptor index {idx}: {tags[idx]}\n due to {m}"
                 )
+
+    # Done iterating over descriptors
+    best_n = np.zeros_like(idxs)
+    best_bic = np.zeros_like(idxs)
+    best_sc = np.zeros_like(idxs)
+    for i, idx in enumerate(idxs):
+
+        bic_list = all_bic[i, :]
+        n_list = all_n[i, :]
+        sc_list = all_sc[i, :]
+
+        filter_nan = ~np.isnan(bic_list)
+        bic_list = bic_list[filter_nan]
+        n_list = n_list[filter_nan]
+        sc_list = sc_list[filter_nan]
+
+        if any(sc_list):
+            bic_list = bic_list[sc_list]
+            n_list = n_list[sc_list]
+        elif any(n_list):
+            filter_0s = np.nonzero(n_list)
+            bic_list = bic_list[filter_0s]
+            n_list = n_list[filter_0s]
+
+        # Save best current n and bic
+        n = n_list[np.argmin(bic_list)]
+        min_bic = np.min(bic_list)
+        best_n[i] = n
+        best_bic[i] = min_bic
+
     filter_0s = np.nonzero(best_n)
-    best_bics_nz = best_bics[filter_0s]
+    best_bic_nz = best_bic[filter_0s]
     best_n_nz = best_n[filter_0s]
+
     if verb > 3 and any(best_n_nz):
         print(
-            f"Out of all descriptors, the list of BICs for the n>0 breakpoints are:\n {best_bics} for\n {best_n}"
+            f"Out of all descriptors, the list of BICs for the n>0 breakpoints are:\n {best_bic} for\n {best_n}"
         )
-    if any(best_bics) and any(best_n):
+    if any(best_bic):
         if any(best_n_nz):
-            min_bic = np.min(best_bics_nz)
-            n = int(best_n[np.where(best_bics == min_bic)[0][0]])
-            idx = idxs[np.where(best_bics == min_bic)[0][0]]
+            min_bic = np.min(best_bic_nz)
+            n = int(best_n[np.where(best_bic == min_bic)[0][0]])
+            idx = idxs[np.where(best_bic == min_bic)[0][0]]
             if verb > 3:
                 print(
                     f"Removing n=0 solutions, {n} breakpoints for index {idx}: {tags[idx]} will be used."
@@ -199,9 +232,9 @@ def run_spock_from_args(df, wp=2, verb=0, imputer_strat="none", plotmode=1):
             fig = plot_and_save(pw_fit, tags, idx, tidx, cb, ms, plotmode)
             return fig
         else:
-            min_bic = np.min(best_bics)
-            idx = idxs[np.argmin(best_bics)]
-            n = int(best_n[np.argmin(best_bics)])
+            min_bic = np.min(best_bic)
+            idx = idxs[np.argmin(best_bic)]
+            n = int(best_n[np.argmin(best_bic)])
             if verb > 3:
                 print(
                     f"Considering n=0 solutions, {n} breakpoints for index {idx}: {tags[idx]} should be used. This does not correspond to a volcano. Exiting!"

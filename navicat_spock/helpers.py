@@ -48,6 +48,30 @@ def call_imputer(a, b, imputer_strat="iterative"):
         return a
 
 
+def slope_check(beta_hats):
+    if beta_hats is None:
+        return False
+    if len(beta_hats) == 1:
+        return False
+    if len(beta_hats) == 2:
+        if beta_hats[0] > 0:
+            return beta_hats[1] < 0
+        if beta_hats[0] < 0:
+            return beta_hats[1] > 0
+    if len(beta_hats) == 3:
+        if beta_hats[0] > 0:
+            if beta_hats[1] > 0:
+                return beta_hats[2] < 0
+            if beta_hats[1] < 0:
+                return beta_hats[2] < 0
+        if beta_hats[0] < 0:
+            if beta_hats[1] > 0:
+                return beta_hats[2] > 0
+            if beta_hats[1] < 0:
+                return beta_hats[2] > 0
+    return False
+
+
 def find_duplicated_columns(df):
     dupes = []
     df = df.round(6)
@@ -220,7 +244,7 @@ def reweighter(target, wp=2):
     scaled = [(py / max(abs(target))) for py in rescaled]
     # print(scaled)
     weights = np.round(
-        np.array([py**wp for py in scaled]), decimals=6
+        np.array([py ** wp for py in scaled]), decimals=6
     )  # **2 at least, could be increased
     weights = normalize(weights).reshape(-1)
     return weights

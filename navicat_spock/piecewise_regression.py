@@ -188,7 +188,7 @@ class NextBreakpoints:
                 gamma_var
                 + beta_var * (gamma / beta) ** 2
                 - 2 * (gamma / beta) * gamma_beta_covar
-            ) / (beta**2)
+            ) / (beta ** 2)
             bp_vars.append(bp_var)
 
         bp_ses = np.sqrt(bp_vars)
@@ -383,7 +383,7 @@ class Muggeo:
         verbose=False,
         max_iterations=30,  # Positive int. Maximum iterations of
         # Muggeo algorithm if not converged
-        tolerance=10**-2,  # Positive float. If breakpoints change
+        tolerance=10 ** -2,  # Positive float. If breakpoints change
         # less than the tolerance then the algorithm has converged
         # Positive float. The minimum required distance between
         # breakpoints, as a proportion of the data range.
@@ -664,7 +664,7 @@ class Fit:
         verbose=False,
         max_iterations=30,  # Positive int. Maximum iterations of
         # Muggeo algorithm if not converged
-        tolerance=10**-2,  # Positive float. If breakpoints change
+        tolerance=10 ** -2,  # Positive float. If breakpoints change
         # less than the tolerance then the algorithm has converged
         # Positive float. The minimum required distance between
         # breakpoints, as a proportion of the data range.
@@ -742,6 +742,10 @@ class Fit:
             results["aic_w"] = self.best_muggeo.best_fit.aic_w
             results["rss"] = self.best_muggeo.best_fit.residual_sum_squares
             results["converged"] = True
+            breakpoints = self.best_muggeo.best_fit.next_breakpoints
+            results["betas"] = self.best_muggeo.best_fit.raw_params[
+                2 : 2 + len(breakpoints)
+            ]
         else:
             results["converged"] = False
             results["estimates"] = None
@@ -749,6 +753,7 @@ class Fit:
             results["bic_w"] = None
             results["aic_w"] = None
             results["rss"] = None
+            results["betas"] = None
         return results
 
     def bootstrap_restarting(self):
@@ -1179,7 +1184,7 @@ class ModelSelection:
         max_breakpoints=10,
         n_boot=100,
         max_iterations=30,
-        tolerance=10**-2,
+        tolerance=10 ** -2,
         min_distance_between_breakpoints=0.01,
         min_distance_to_edge=0.02,
         weights=1.0,
@@ -1191,8 +1196,9 @@ class ModelSelection:
         self.model_summaries = []
 
         self.stop = False
+        self.verbose = verbose
 
-        if verbose:
+        if self.verbose:
             print("Running fit with n_breakpoint = 0 . . ")
 
         self.no_breakpoint_fit(xx, yy, weights)
@@ -1261,9 +1267,9 @@ class ModelSelection:
 
             table_contents += model_row
 
-        print(table_contents)
-
-        print("Min BIC (Bayesian Information Criterion) suggests best model")
+        if self.verbose:
+            print(table_contents)
+        # print("Min BIC (Bayesian Information Criterion) suggests best model")
 
     def no_breakpoint_fit(self, xx, yy, weights):
         Z = np.array([xx])
@@ -1293,11 +1299,11 @@ class ModelSelection:
             "estimates": {},
             "converged": True,
             "rss": rss,
+            "betas": np.array(results.params[1], ndmin=1),
         }
 
         fit_data["estimates"]["const"] = results.params[0]
         fit_data["estimates"]["alpha1"] = results.params[1]
-
         self.model_summaries.append(fit_data)
 
 
