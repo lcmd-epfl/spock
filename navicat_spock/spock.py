@@ -94,7 +94,10 @@ def run_spock_from_args(df, wp=2, verb=0, imputer_strat="none", plotmode=1):
                 verbose=verb > 2,
             )
             all_sc[i, :] = np.array(
-                [slope_check(summary["betas"]) for summary in msel.model_summaries],
+                [
+                    slope_check(summary["betas"], verb)
+                    for summary in msel.model_summaries
+                ],
                 dtype=bool,
             )
             all_bic[i, :] = np.array(
@@ -110,33 +113,18 @@ def run_spock_from_args(df, wp=2, verb=0, imputer_strat="none", plotmode=1):
             n = n_list[np.argmin(bic_list)]
             min_bic = np.min(bic_list)
 
-            if verb > 3:
+            if verb > 4:
                 print(
-                    f"The list of BICs for the n breakpoints are:\n {bic_list} for\n {n_list}"
+                    f"The list of BICs for n breakpoints are:\n {bic_list} for\n {n_list}"
                 )
-            if verb > 2:
-                print(f"The best number of breakpoints according to BIC is {n}")
             if n < 1:
                 if verb > 1:
                     print(
-                        f"BIC seems to indicate that a linear fit is better than a volcano fit. Warning!"
+                        f"BIC seems to indicate that a linear fit is better than a volcano fit for this descriptor. Warning!"
                     )
-                    if verb > 3:
-                        print(
-                            f"Adding {n} as the best BIC for this descriptor.\nAdding {min_bic} as the best BIC for this descriptor."
-                        )
             else:
-                if verb > 3:
-                    print(
-                        f"After zero removal, the list of BICs for the n breakpoints are:\n {bic_list} for\n {n_list}"
-                    )
-                if any(bic_list):
-                    if n > 0:
-                        if verb > 3:
-                            print(
-                                f"Adding {n} as the best BIC for this descriptor.\nAdding {min_bic} as the best BIC for this descriptor."
-                            )
-                        fitted = True
+                fitted = True
+
             if prefit and verb > 1:
                 # Fit piecewise regression!
                 pw_fit = Fit(
@@ -154,6 +142,7 @@ def run_spock_from_args(df, wp=2, verb=0, imputer_strat="none", plotmode=1):
                 if verb > 1:
                     # Plot the data, fit, breakpoints and confidence intervals
                     _ = plot_and_save(pw_fit, tags, idx, tidx, cb, ms, plotmode)
+
         except Exception as m:
             traceback.print_exc()
             all_bic[i, :] = np.inf
@@ -165,14 +154,21 @@ def run_spock_from_args(df, wp=2, verb=0, imputer_strat="none", plotmode=1):
                 )
 
     # Done iterating over descriptors
-    best_n = np.zeros_like(idxs)
-    best_bic = np.zeros_like(idxs)
-    best_sc = np.zeros_like(idxs)
+    best_n = np.zeros_like(idxs, dtype=int)
+    best_bic = np.zeros_like(idxs, dtype=float)
+    best_sc = np.zeros_like(idxs, dtype=bool)
     for i, idx in enumerate(idxs):
+        if verb > 4:
+            print(f"Filtering fits with descriptor index {idx}: {tags[idx]}...:")
 
         bic_list = all_bic[i, :]
         n_list = all_n[i, :]
         sc_list = all_sc[i, :]
+
+        if verb > 4:
+            print(
+                f"Before filtering, the list of BICs for n breakpoints is:\n {bic_list}\n {n_list}\n {sc_list}"
+            )
 
         filter_nan = ~np.isnan(bic_list)
         bic_list = bic_list[filter_nan]
@@ -180,12 +176,21 @@ def run_spock_from_args(df, wp=2, verb=0, imputer_strat="none", plotmode=1):
         sc_list = sc_list[filter_nan]
 
         if any(sc_list):
+            if verb > 4:
+                print("Filtering by slope criterion...")
             bic_list = bic_list[sc_list]
             n_list = n_list[sc_list]
         elif any(n_list):
+            if verb > 4:
+                print("Filtering by number of breakpoints...")
             filter_0s = np.nonzero(n_list)
             bic_list = bic_list[filter_0s]
             n_list = n_list[filter_0s]
+
+        if verb > 4:
+            print(
+                f"After filtering, the list of BICs for n breakpoints is:\n {bic_list}\n {n_list}"
+            )
 
         # Save best current n and bic
         n = n_list[np.argmin(bic_list)]

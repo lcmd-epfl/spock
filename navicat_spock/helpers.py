@@ -48,7 +48,9 @@ def call_imputer(a, b, imputer_strat="iterative"):
         return a
 
 
-def slope_check(beta_hats):
+def slope_check(beta_hats, verb=0):
+    if verb > 4:
+        print(f"Slopes are: {beta_hats}")
     if beta_hats is None:
         return False
     if len(beta_hats) == 1:
@@ -227,6 +229,7 @@ def Capturing(list):
 
 
 def namefixer(filename):
+    assert isinstance(filename, str)
     return re.sub("[^a-zA-Z0-9 \n\.]", "_", filename).replace(" ", "_")
 
 
@@ -236,7 +239,8 @@ def normalize(a, axis=-1, order=2):
     return a / np.expand_dims(l2, axis)
 
 
-def reweighter(target, wp=2):
+def reweighter(target, wp=3):
+    assert isinstance(wp, int)
     std = target.std()
     norm = sum(target)  # Not needed since robust regression will normalize
     rescaled = [(py - min(target)) + std for py in target]
@@ -347,8 +351,8 @@ def processargs(arguments):
         "--weights",
         dest="wp",
         type=int,
-        default=2,
-        help="In the regression, integer power with which higher activity points are weighted. Higher means low activity points are given less priority in the fit (default: 2)",
+        default=1,
+        help="In the regression, integer power with which higher activity points are weighted. Higher means low activity points are given less priority in the fit (default: 1)",
     )
     vbuilder.add_argument(
         "-v",

@@ -743,9 +743,10 @@ class Fit:
             results["rss"] = self.best_muggeo.best_fit.residual_sum_squares
             results["converged"] = True
             breakpoints = self.best_muggeo.best_fit.next_breakpoints
-            results["betas"] = self.best_muggeo.best_fit.raw_params[
-                2 : 2 + len(breakpoints)
-            ]
+            slopes = [self.best_muggeo.best_fit.raw_params[1]]
+            for b in self.best_muggeo.best_fit.raw_params[2 : 2 + len(breakpoints)]:
+                slopes.append(b + self.best_muggeo.best_fit.raw_params[1])
+            results["betas"] = np.array(slopes)
         else:
             results["converged"] = False
             results["estimates"] = None
