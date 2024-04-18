@@ -2,6 +2,7 @@
 
 import sys
 import traceback
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -146,9 +147,8 @@ def run_spock_from_args(
                             "Prefitting did not work. This is likely a bug or extremely bad luck in the Muggeo fit."
                         )
                     raise ConvergenceError("The fitting process did not converge.")
-                if verb > 1:
-                    # Plot the data, fit, breakpoints and confidence intervals
-                    _ = plot_and_save(pw_fit, tags, idx, tidx, cb, ms, plotmode)
+                # Plot the data, fit, breakpoints and confidence intervals
+                _ = plot_and_save(pw_fit, tags, idx, tidx, cb, ms, plotmode)
 
         except Exception as m:
             traceback.print_exc()
