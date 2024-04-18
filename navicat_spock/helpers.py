@@ -211,9 +211,9 @@ def clean_df(df):
 
 def n_iter_helper(ok):
     if ok:
-        return 200
-    if not ok:
         return 1000
+    if not ok:
+        return 5000
 
 
 def Capturing(list):
@@ -374,6 +374,16 @@ def processargs(arguments):
         help="Plot mode for volcano plotting. Higher is more detailed, lower is more basic. (default: 1)",
     )
     vbuilder.add_argument(
+        "-rng",
+        "--rng",
+        "-random",
+        "--random",
+        dest="seed",
+        type=int,
+        default=42,
+        help="Random seed to use in the Muggeo fits. (default: 42)",
+    )
+    vbuilder.add_argument(
         "-fa",
         "--fa",
         "-augment",
@@ -401,7 +411,7 @@ def processargs(arguments):
     assert isinstance(df, pd.DataFrame)
     if args.fa > 0:
         df = augment(df, args.fa, args.verb)
-    return (df, args.wp, args.verb, args.imputer_strat, args.plotmode)
+    return (df, args.wp, args.verb, args.imputer_strat, args.plotmode, args.seed)
 
 
 def check_input(filenames, wp, imputer_strat, verb):

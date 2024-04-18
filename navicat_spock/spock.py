@@ -24,15 +24,30 @@ from navicat_spock.plotting2d import plot_and_save
 def run_spock():
     (df, wp, verb, imputer_strat, plotmode) = processargs(sys.argv[1:])
     _ = run_spock_from_args(
-        df=df, wp=wp, verb=verb, imputer_strat=imputer_strat, plotmode=plotmode
+        df=df,
+        wp=wp,
+        verb=verb,
+        imputer_strat=imputer_strat,
+        plotmode=plotmode,
+        seed=seed,
     )
 
 
 def run_spock_from_args(
-    df, wp=2, verb=0, imputer_strat="none", plotmode=1, prefit=False
+    df,
+    wp=2,
+    verb=0,
+    imputer_strat="none",
+    plotmode=1,
+    seed=None,
+    prefit=False,
 ):
     fitted = False
+    if seed is None:
+        seed = int(np.random.rand() * (2**32 - 1))
+    np.random.seed(0)
     if verb > 0:
+        print("Random seed set to {seed}.")
         print(
             f"spock will assume that {df.columns[0]} contains names/IDs of catalysts/samples."
         )
