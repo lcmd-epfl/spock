@@ -25,8 +25,9 @@ def run_spock():
     _ = run_spock_from_args(df, wp, verb, imputer_strat, plotmode)
 
 
-def run_spock_from_args(df, wp=2, verb=0, imputer_strat="none", plotmode=1):
-    prefit = False
+def run_spock_from_args(
+    df, wp=2, verb=0, imputer_strat="none", plotmode=1, prefit=False
+):
     fitted = False
     if verb > 0:
         print(
