@@ -129,7 +129,7 @@ def run_spock_from_args(
             else:
                 fitted = True
 
-            if prefit and fitted and n > 0:
+            if prefit and fitted:
                 # Fit piecewise regression!
                 pw_fit = Fit(
                     descriptor,
@@ -147,7 +147,11 @@ def run_spock_from_args(
                             "Prefitting did not work. This is likely a bug or extremely bad luck in the Muggeo fit."
                         )
                     raise ConvergenceError("The fitting process did not converge.")
-                # Plot the data, fit, breakpoints and confidence intervals
+                # Plot the data and fit for this prefitted model, even if its not great
+                if verb > 2:
+                    print(
+                        f"Prefitting volcano with {n} breakpoints and descriptor index {idx}: {tags[idx]}, for which a BIC of {min_bic} was obtained."
+                    )
                 _ = plot_and_save(pw_fit, tags, idx, tidx, cb, ms, plotmode)
 
         except Exception as m:
