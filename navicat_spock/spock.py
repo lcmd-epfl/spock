@@ -22,7 +22,9 @@ from navicat_spock.plotting2d import plot_and_save
 
 def run_spock():
     (df, wp, verb, imputer_strat, plotmode) = processargs(sys.argv[1:])
-    _ = run_spock_from_args(df, wp, verb, imputer_strat, plotmode)
+    _ = run_spock_from_args(
+        df=df, wp=wp, verb=verb, imputer_strat=imputer_strat, plotmode=plotmode
+    )
 
 
 def run_spock_from_args(
@@ -126,19 +128,23 @@ def run_spock_from_args(
             else:
                 fitted = True
 
-            if prefit and verb > 1:
+            if prefit and fitted and n > 0:
                 # Fit piecewise regression!
                 pw_fit = Fit(
                     descriptor,
                     target,
                     n_breakpoints=n,
                     weights=weights,
-                    max_iterations=n_iter_helper(False),
+                    max_iterations=5000,
                     tolerance=xrange,
                 )
                 if verb > 2:
                     pw_fit.summary()
                 if not pw_fit.best_muggeo:
+                    if verb > 2:
+                        print(
+                            "Prefitting did not work. This is likely a bug or extremely bad luck in the Muggeo fit."
+                        )
                     raise ConvergenceError("The fitting process did not converge.")
                 if verb > 1:
                     # Plot the data, fit, breakpoints and confidence intervals
@@ -245,10 +251,10 @@ def run_spock_from_args(
                 print(
                     f"Considering n=0 solutions, {n} breakpoints for index {idx}: {tags[idx]} should be used. This does not correspond to a volcano. Exiting!"
                 )
-            exit()
+            sys.exit(1)
     else:
         print("None of the descriptors could be fit whatsoever. Exiting!")
-        exit()
+        sys.exit(1)
 
 
 if __name__ == "__main__":
