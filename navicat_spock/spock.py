@@ -149,7 +149,7 @@ def run_spock_from_args(
                 pw_fit = Fit(
                     descriptor,
                     target,
-                    n_breakpoints=n,
+                    n_breakpoints=int(n),
                     weights=weights,
                     max_iterations=5000,
                     tolerance=xrange,
