@@ -22,7 +22,7 @@ from navicat_spock.plotting2d import plot_and_save
 
 
 def run_spock():
-    (df, wp, verb, imputer_strat, plotmode) = processargs(sys.argv[1:])
+    (df, wp, verb, imputer_strat, plotmode, seed) = processargs(sys.argv[1:])
     _ = run_spock_from_args(
         df=df,
         wp=wp,
