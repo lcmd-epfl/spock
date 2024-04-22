@@ -4,6 +4,7 @@ import matplotlib
 import numpy as np
 import scipy.stats as stats
 import matplotlib
+import math
 import os
 
 if os.name == "posix" and "DISPLAY" not in os.environ:
@@ -196,8 +197,12 @@ def plot_and_save(pw_fit, tags, idx, tidx, cb, ms, plotmode):
     x = pw_fit.xx
     y = pw_fit.yy
     xint = np.linspace(min(pw_fit.xx), max(pw_fit.xx), 250)
-    xbase = bround(np.abs(max(pw_fit.xx) - min(pw_fit.xx)) / 10, type="max")
-    ybase = bround(np.abs(max(pw_fit.yy) - min(pw_fit.yy)) / 10, type="max")
+    xspread = np.abs(max(pw_fit.xx) - min(pw_fit.xx))
+    yspread = np.abs(max(pw_fit.yy) - min(pw_fit.yy))
+    xom = int(10 ** (np.floor(math.log(xspread, 10))))
+    yom = int(10 ** (np.floor(math.log(yspread, 10))))
+    xbase = bround(xspread / 10, xom, type="max")
+    ybase = bround(yspread / 10, yom, type="max")
     final_params = pw_fit.best_muggeo.best_fit.raw_params
     breakpoints = pw_fit.best_muggeo.best_fit.next_breakpoints
 
