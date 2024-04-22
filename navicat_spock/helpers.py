@@ -332,7 +332,6 @@ def processargs(arguments):
     vbuilder.add_argument(
         "-version", "--version", action="version", version="%(prog)s 0.0.1"
     )
-    runmode_arg = vbuilder.add_mutually_exclusive_group()
     vbuilder.add_argument(
         "-i",
         "--i",
