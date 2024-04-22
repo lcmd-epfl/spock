@@ -47,7 +47,7 @@ def run_spock_from_args(
         seed = int(np.random.rand() * (2**32 - 1))
     np.random.seed(0)
     if verb > 0:
-        print("Random seed set to {seed}.")
+        print(f"Random seed set to {seed}.")
         print(
             f"spock will assume that {df.columns[0]} contains names/IDs of catalysts/samples."
         )
