@@ -194,15 +194,19 @@ def plot_2d(
 
 def plot_and_save(pw_fit, tags, idx, tidx, cb, ms, plotmode):
     # fig = plot_and_save(pw_fit, tags, idx, tidx)
+
+    # Try to figure out good dimensions for the axes and ticks
     x = pw_fit.xx
     y = pw_fit.yy
     xint = np.linspace(min(pw_fit.xx), max(pw_fit.xx), 250)
     xspread = np.abs(max(pw_fit.xx) - min(pw_fit.xx))
     yspread = np.abs(max(pw_fit.yy) - min(pw_fit.yy))
-    xom = int(10 ** (np.floor(math.log(xspread, 10))))
-    yom = int(10 ** (np.floor(math.log(yspread, 10))))
+    xom = 10 ** (np.floor(math.log(xspread, 10)))
+    yom = 10 ** (np.floor(math.log(yspread, 10)))
     xbase = bround(xspread / 10, xom, type="max")
     ybase = bround(yspread / 10, yom, type="max")
+
+    # Getting the raw data to plot
     final_params = pw_fit.best_muggeo.best_fit.raw_params
     breakpoints = pw_fit.best_muggeo.best_fit.next_breakpoints
 
