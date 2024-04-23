@@ -5,6 +5,7 @@ import statsmodels.api as sm
 import warnings
 
 import piecewise_regression.r_squared_calc as r_squared_calc
+from sklearn.metrics import r2_score
 from piecewise_regression.data_validation import (
     validate_positive_number,
     validate_boolean,
@@ -15,24 +16,6 @@ from piecewise_regression.data_validation import (
 
 
 class NextBreakpoints:
-    """
-    One iteration of Muggeo's segmented regression algorithm. Gets
-    the next breakpoints.
-    Also calculates interesting statistics. This expects data validation
-    and error
-    handling are done at a higher level.
-
-    :param xx: Data series in x-axis for fitting (same axis as the breakpoints)
-    :type xx: list
-
-    :param yy: Data series in y-axis for fitting
-    :type yy: list
-
-    :param current_breakpoints: The starting breakpoints for this iteration
-    :type current_breakpoints: list
-
-    """
-
     def __init__(
         self,
         # list(float) or numpy(float). REQUIRED. Data series in x-axis
@@ -44,6 +27,9 @@ class NextBreakpoints:
         current_breakpoints,
         weights=1.0,
     ):
+        # Passing weights to use them in R2 or loss computations
+        self.weights = weights
+
         # Data validation done at a higher level
         self.xx = xx
         self.yy = yy
@@ -298,15 +284,20 @@ class NextBreakpoints:
         """
         yy_predicted = self.get_predicted_yy()
         n_params = 2 * self.n_breakpoints + 2
+        n_points = len(self.xx)
 
         rss, tss, r2, adjr2 = r_squared_calc.get_r_squared(
             self.yy, yy_predicted, n_params
         )
+        r2_w = r2_score(self.yy, yy_predicted, sample_weight=self.weights)
+        adjr2_w = 1 - (1 - r2_w) * (n_points - 1) / (n_points - n_params - 1)
 
         self.residual_sum_squares = rss
         self.total_sum_squares = tss
         self.r_squared = r2
         self.adjusted_r_squared = adjr2
+        self.r_squared_w = r2_w
+        self.adjusted_r_squared_w = adjr2_w
 
     def calculate_bayesian_information_criterion(self):
         """
@@ -328,47 +319,6 @@ class NextBreakpoints:
 
 
 class Muggeo:
-    """
-    Muggeo's iterative segmented regression method. This is a simple version.
-    Errors are handled at a higher level in the Fit object. See Muggeo (2003).
-    If the breakpoints get too close together, or get outside
-    (or near the edge) of the data range,
-    the algorithm is stopped because this is likely to be a local
-    minimum that is difficult to escape, as well
-    as possibly generating errors in the iterative procedue.
-
-    :param xx: Data series in x-axis for fitting (same axis as the breakpoints)
-    :type xx: list of floats
-
-    :param yy: Data series in y-axis for fitting
-    :type yy: list of floats
-
-    :param n_breakpoints: The number of breakpoints to fit
-    :type n_breakpoints: positive int
-
-    :param start_values: A list of initial guesses for the breakpoints
-    :type start_values: list floats
-
-    :param verbose: If True, prints out updates to the terminal
-    :type verbose: bool
-
-    :param max_iterations: How many iterations before stopping if not converged
-    :type max_iterations: positive int
-
-    :param tolerance: How close breakpoints from pervious iterations must be
-        to consider converged.
-    :type tolerance: positive float
-
-    :param min_distance_between_breakpoints: The minimum allowed distance
-        between breakpoints, as a proportion of the data range.
-    :type min_distance_between_breakpoints: positive float
-
-    :param min_distance_between_breakpoints: The minimum allowed distance from
-        the edge of data to a breakpoint, as a proportion of the data range.
-    :type min_distance_between_breakpoints: positive float
-
-    """
-
     def __init__(
         self,
         # list(float) or numpy(float). REQUIRED. Data series in x-axis
@@ -599,52 +549,6 @@ class Muggeo:
 
 
 class Fit:
-    """
-    Fit a peicewise (segmented) regression model to data.
-    Uses bootstrap restarting to avoid local minima.
-    Requires either n_breakpoints of start_values.
-    if no start_vaues are given, they are instead uniformly randomly
-    generated across range of data.
-    This is the main user facing object and input data is validated mainly
-    at this level.
-
-    :param xx: Data series in x-axis for fitting (same axis as the breakpoints)
-    :type xx: list of floats
-
-    :param yy: Data series in y-axis for fitting.
-    :type yy: list of floats
-
-    :param n_breakpoints: The number of breakpoints to fit.
-    :type n_breakpoints: positive int
-
-    :param start_values: A list of initial guesses for the breakpoints.
-    :type start_values: list floats
-
-    :param n_boot: How many times to run the bootstrap restarting procedure.
-        Set to zero for no bootstrap restarting.
-    :type n_boot: non-negative int
-
-    :param verbose: If True, prints out updates to the terminal.
-    :type verbose: bool
-
-    :param max_iterations: How many iterations before stopping if not
-        converged, in the Muggeo iterative procedure.
-    :type max_iterations: positive int
-
-    :param tolerance: How close breakpoints from pervious iterations must
-        be to consider converged.
-    :type tolerance: positive float
-
-    :param min_distance_between_breakpoints: The minimum allowed distance
-        between breakpoints, as a proportion of the data range.
-    :type min_distance_between_breakpoints: positive float
-
-    :param min_distance_between_breakpoints: The minimum allowed distance from
-        the edge of data to a breakpoint, as a proportion of the data range.
-    :type min_distance_between_breakpoints: positive float
-
-    """
-
     def __init__(
         self,
         # list(float) or numpy(float). REQUIRED Data series in x-axis
@@ -1083,7 +987,14 @@ class Fit:
                 "R Squared", self.best_muggeo.best_fit.r_squared
             )
             adj_r_2_text = "{:<20} {:>20.6f}\n".format(
-                "Adjusted R Squared", self.best_muggeo.best_fit.adjusted_r_squared
+                "Adj. R Squared", self.best_muggeo.best_fit.adjusted_r_squared
+            )
+            r_2_w_text = "{:<20} {:>20.6f}\n".format(
+                "R Squared (weighted)", self.best_muggeo.best_fit.r_squared_w
+            )
+            adj_r_2_w_text = "{:<20} {:>20.6f}\n".format(
+                "Adj. R Squared (weighted)",
+                self.best_muggeo.best_fit.adjusted_r_squared_w,
             )
             converged_text = "{:<20} {:>20s}\n".format(
                 "Converged: ", str(self.best_muggeo.converged)
@@ -1098,6 +1009,8 @@ class Fit:
                 + tss_text
                 + r_2_text
                 + adj_r_2_text
+                + r_2_w_text
+                + adj_r_2_w_text
                 + converged_text
                 + double_line
             )

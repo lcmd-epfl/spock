@@ -400,6 +400,14 @@ def processargs(arguments):
         default="none",
         help="Imputter to refill missing datapoints. Beta version. (default: None)",
     )
+    vbuilder.add_argument(
+        "--plot_all",
+        "-plot_all",
+        dest="prefit",
+        type=bool,
+        default=0,
+        help="Plot and print the best volcano per descriptor. This is slow and writes a lot of plots, do not use unless you know what you are doing. (default: 0, False)",
+    )
     args = vbuilder.parse_args(arguments)
 
     dfs = check_input(args.filenames, args.wp, args.imputer_strat, args.verb)
@@ -410,7 +418,15 @@ def processargs(arguments):
     assert isinstance(df, pd.DataFrame)
     if args.fa > 0:
         df = augment(df, args.fa, args.verb)
-    return (df, args.wp, args.verb, args.imputer_strat, args.plotmode, args.seed)
+    return (
+        df,
+        args.wp,
+        args.verb,
+        args.imputer_strat,
+        args.plotmode,
+        args.seed,
+        args.prefit,
+    )
 
 
 def check_input(filenames, wp, imputer_strat, verb):

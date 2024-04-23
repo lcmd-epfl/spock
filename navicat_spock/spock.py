@@ -22,7 +22,7 @@ from navicat_spock.plotting2d import plot_and_save
 
 
 def run_spock():
-    (df, wp, verb, imputer_strat, plotmode, seed) = processargs(sys.argv[1:])
+    (df, wp, verb, imputer_strat, plotmode, seed, prefit) = processargs(sys.argv[1:])
     _ = run_spock_from_args(
         df=df,
         wp=wp,
@@ -30,6 +30,7 @@ def run_spock():
         imputer_strat=imputer_strat,
         plotmode=plotmode,
         seed=seed,
+        prefit=prefit,
     )
 
 
@@ -144,7 +145,11 @@ def run_spock_from_args(
             else:
                 fitted = True
 
-            if prefit and fitted:
+            if prefit and fitted and n > 0:
+                if verb > 3:
+                    print(
+                        f"Prefitting the best model for this descriptor with {n} breakpoints..."
+                    )
                 # Fit piecewise regression!
                 pw_fit = Fit(
                     descriptor,

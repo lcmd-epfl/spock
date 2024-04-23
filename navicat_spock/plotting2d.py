@@ -27,18 +27,6 @@ def calc_ci(resid, n, dof, x, x2, y2):
     return ci
 
 
-def plot_ci(ci, x2, y2, ax=None):
-    if ax is None:
-        try:
-            ax = plt.gca()
-        except Exception as m:
-            return
-
-    ax.fill_between(x2, y2 + ci, y2 - ci, color="#b9cfe7", alpha=0.6)
-
-    return ax
-
-
 def beautify_ax(ax):
     # Border
     ax.spines["top"].set_color("black")
@@ -77,7 +65,6 @@ def plot_2d(
     y,
     px,
     py,
-    ci=None,
     xmin=0,
     xmax=100,
     xbase=20,
@@ -85,10 +72,10 @@ def plot_2d(
     xlabel="X-axis",
     ylabel="Y-axis",
     filename="plot.png",
-    rid=None,
-    rb=None,
     cb="white",
     ms="o",
+    breakpoints=None,
+    estimates=None,
     plotmode=1,
 ):
     fig, ax = plt.subplots(
@@ -104,83 +91,37 @@ def plot_2d(
     if plotmode == 0:
         ax.plot(x, y, "-", linewidth=1.5, color="midnightblue", alpha=0.95)
         ax = beautify_ax(ax)
-        if rid is not None and rb is not None:
-            avgs = []
-            rb.append(xmax)
-            for i in range(len(rb) - 1):
-                avgs.append((rb[i] + rb[i + 1]) / 2)
-            for i in rb:
-                ax.axvline(
-                    i, linestyle="dashed", color="black", linewidth=0.75, alpha=0.75
-                )
     elif plotmode == 1:
         ax.plot(x, y, "-", linewidth=1.5, color="midnightblue", alpha=0.95, zorder=1)
         ax = beautify_ax(ax)
-        if rid is not None and rb is not None:
-            avgs = []
-            rb.append(xmax)
-            for i in range(len(rb) - 1):
-                avgs.append((rb[i] + rb[i + 1]) / 2)
-            for i in rb:
-                ax.axvline(
-                    i,
-                    linestyle="dashed",
-                    color="black",
-                    linewidth=0.75,
-                    alpha=0.75,
-                    zorder=3,
-                )
         plotpoints(ax, px, py, cb, ms, plotmode)
     elif plotmode == 2:
         ax.plot(x, y, "-", linewidth=1.5, color="midnightblue", alpha=0.95, zorder=1)
+        for bp in breakpoints:
+            ax.axvline(
+                bp,
+                linestyle="dotted",
+                linewidth=0.75,
+                alpha=0.75,
+                color="lightsteelblue",
+            )
         ax = beautify_ax(ax)
-        if rid is not None and rb is not None:
-            avgs = []
-            rb.append(xmax)
-            for i in range(len(rb) - 1):
-                avgs.append((rb[i] + rb[i + 1]) / 2)
-            for i in rb:
-                ax.axvline(
-                    i,
-                    linestyle="dashed",
-                    color="black",
-                    linewidth=0.5,
-                    alpha=0.75,
-                    zorder=3,
-                )
-            yavg = (y.max() + y.min()) * 0.5
-            for i, j in zip(rid, avgs):
-                plt.text(
-                    j,
-                    yavg,
-                    i,
-                    fontsize=7.5,
-                    horizontalalignment="center",
-                    verticalalignment="center",
-                    rotation="vertical",
-                    zorder=4,
-                )
         plotpoints(ax, px, py, cb, ms, plotmode)
     elif plotmode == 3:
         ax.plot(x, y, "-", linewidth=1.5, color="midnightblue", alpha=0.95, zorder=1)
+        for bp in breakpoints:
+            ax.axvline(
+                bp,
+                linestyle="dotted",
+                linewidth=0.75,
+                alpha=0.75,
+                color="lightsteelblue",
+            )
         ax = beautify_ax(ax)
-        if rid is not None and rb is not None:
-            avgs = []
-            rb.append(xmax)
-            for i in range(len(rb) - 1):
-                avgs.append((rb[i] + rb[i + 1]) / 2)
-            for i in rb:
-                ax.axvline(
-                    i,
-                    linestyle="dashed",
-                    color="black",
-                    linewidth=0.75,
-                    alpha=0.75,
-                    zorder=3,
-                )
         plotpoints(ax, px, py, cb, ms, plotmode)
-        if ci is not None:
-            plot_ci(ci, x, y, ax=ax)
+        for bp_i in range(len(breakpoints)):
+            bp_ci = estimates["breakpoint{}".format(bp_i + 1)]["confidence_interval"]
+            plt.axvspan(bp_ci[0], bp_ci[1], alpha=0.1, color="#b9cfe7")
     ymin, ymax = ax.get_ylim()
     ymax = bround(ymax, ybase, type="max")
     ymin = bround(ymin, ybase, type="min")
@@ -209,6 +150,7 @@ def plot_and_save(pw_fit, tags, idx, tidx, cb, ms, plotmode):
     # Getting the raw data to plot
     final_params = pw_fit.best_muggeo.best_fit.raw_params
     breakpoints = pw_fit.best_muggeo.best_fit.next_breakpoints
+    estimates = pw_fit.best_muggeo.best_fit.estimates
 
     # Extract what we need from params
     intercept_hat = final_params[0]
@@ -232,12 +174,13 @@ def plot_and_save(pw_fit, tags, idx, tidx, cb, ms, plotmode):
         ylabel=tags[tidx],
         cb=cb,
         ms=ms,
+        breakpoints=breakpoints,
+        estimates=estimates,
         plotmode=plotmode,
         filename=f"{namefixer(tags[idx].strip())}_volcano.png",
     )
 
     # Pass in standard matplotlib keywords to control any of the plots
-    # pw_fit.plot_breakpoints()
     # pw_fit.plot_breakpoint_confidence_intervals()
 
     # Print to file
