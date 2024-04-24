@@ -76,7 +76,7 @@ def slope_check(beta_hats, verb=0):
 
 def find_duplicated_columns(df):
     dupes = []
-    df = df.round(4)
+    df = df.round(6)
     columns = df.columns
     for i in range(len(columns)):
         col1 = df.iloc[:, i]
@@ -188,7 +188,7 @@ def augment(df, level, verb=0):
     dups = find_duplicated_columns(x_full)
     x_full = x_full.drop(dups, axis=1)
     # Prune redundant features based on vif, we use a very high threshold to be conservative
-    x_full = prune_by_vif(x_full, thresh=10, verb=verb)
+    x_full = prune_by_vif(x_full, thresh=100, verb=verb)
     if verb > 6:
         print(y.head())
         print(x_full.head())
