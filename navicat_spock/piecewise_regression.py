@@ -990,10 +990,10 @@ class Fit:
                 "Adj. R Squared", self.best_muggeo.best_fit.adjusted_r_squared
             )
             r_2_w_text = "{:<20} {:>20.6f}\n".format(
-                "R Squared (weighted)", self.best_muggeo.best_fit.r_squared_w
+                "R Squared (w.)", self.best_muggeo.best_fit.r_squared_w
             )
             adj_r_2_w_text = "{:<20} {:>20.6f}\n".format(
-                "Adj. R Squared (weighted)",
+                "Adj. R Squared (w.)",
                 self.best_muggeo.best_fit.adjusted_r_squared_w,
             )
             converged_text = "{:<20} {:>20s}\n".format(
