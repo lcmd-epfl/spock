@@ -76,7 +76,7 @@ def slope_check(beta_hats, verb=0):
 
 def find_duplicated_columns(df):
     dupes = []
-    df = df.round(6)
+    df = df.round(4)
     columns = df.columns
     for i in range(len(columns)):
         col1 = df.iloc[:, i]
@@ -90,50 +90,46 @@ def find_duplicated_columns(df):
             if col1.equals(col2):
                 dupes.append(columns[i])
                 break
+            # remove constants too
+            if col1.nunique() <= 1:
+                dupes.append(columns[i])
+                break
     return dupes
 
 
-def variance_inflation_factor(exog, exog_idx):
-    """
-    exog : ndarray, (nobs, k_vars)
-        design matrix with all explanatory variables, as for example used in
-        regression
-    exog_idx : int
-        index of the exogenous variable in the columns of exog
-    """
-    k_vars = exog.shape[1]
-    x_i = exog[:, exog_idx]
-    mask = np.arange(k_vars) != exog_idx
-    x_noti = exog[:, mask]
-    if x_noti.size == 0:
-        return 1.0
-    r_squared_i = (
-        linear_model.LinearRegression()
-        .fit(x_i.reshape(-1, 1), x_noti)
-        .score(x_i.reshape(-1, 1), x_noti)
-    )
-    den = 1.0 - r_squared_i
-    tol = 0.001
-    vif = 1.0 / max(den, tol)
-    return vif
+def fast_vif(X):
+    cc = np.corrcoef(X, rowvar=False)
+    vif = np.linalg.inv(cc)
+    return vif.diagonal()
 
 
-def prune_by_vif(X, thresh=2, verb=0):
+def prune_by_vif(X, thresh=4, verb=0):
+    if verb > 2:
+        print(
+            f"Augmented features will be pruned based on a variance inflation factor or {thresh}"
+        )
     cols = X.columns
     variables = np.arange(X.shape[1])
     dropped = True
+    np.save("test_1.npy", X[cols].values)
     while dropped:
         dropped = False
         c = X[cols[variables]].values
-        vif = [variance_inflation_factor(c, ix) for ix in np.arange(c.shape[1])]
-        maxloc = vif.index(max(vif))
-        if max(vif) > thresh:
+        vif = np.abs(fast_vif(c))
+        maxloc = np.argmax(vif)
+        if vif[maxloc] > thresh:
             if verb > 2:
                 print(
-                    f"Dropping {X[cols[variables]].columns[maxloc]} at index {maxloc} due to variance inflation."
+                    f"Dropping {X[cols[variables]].columns[maxloc]} at index {maxloc} due to max. variance inflation of {vif[maxloc]}."
                 )
             variables = np.delete(variables, maxloc)
             dropped = True
+        else:
+            if verb > 2:
+                print(
+                    f"Exiting variance inflation pruning due to max. variance inflation of {vif[maxloc]} < {thresh}."
+                )
+    np.save("test_2.npy", c)
     return X[cols[variables]]
 
 
@@ -188,11 +184,11 @@ def augment(df, level, verb=0):
             if "1/" not in i and "1/" not in j:
                 x_full[div12] = x_full[i] / x_full[j]
                 x_full[div21] = x_full[j] / x_full[i]
-    # Prune redundant features based on vif, we use a very high threshold to be conservative
-    x_full = prune_by_vif(x_full, thresh=100, verb=verb)
-    # Remove almost exact duplicates from feature datafragme
+    # Remove almost exact duplicates from feature datafragme, also removes constant columns
     dups = find_duplicated_columns(x_full)
     x_full = x_full.drop(dups, axis=1)
+    # Prune redundant features based on vif, we use a very high threshold to be conservative
+    x_full = prune_by_vif(x_full, thresh=10, verb=verb)
     if verb > 6:
         print(y.head())
         print(x_full.head())
@@ -452,3 +448,21 @@ def check_input(filenames, wp, imputer_strat, verb):
     if not wp > 0 and isinstance(wp, int):
         raise InputError("Invalid weighting power input! Should be a positive integer.")
     return dfs
+
+
+def test_vif_1():
+    sol = np.array([22.95, 3.0, 12.95, 3.0])
+    a = [1, 1, 2, 3, 4]
+    b = [2, 2, 3, 2, 1]
+    c = [4, 6, 7, 8, 9]
+    d = [4, 3, 4, 5, 4]
+    ck = np.column_stack([a, b, c, d])
+    # print(ck)
+    cc = np.corrcoef(ck, rowvar=False)
+    vifm = np.linalg.inv(cc)
+    vif = vifm.diagonal()
+    assert np.allclose(vif, sol)
+
+
+if __name__ == "__main__":
+    test_vif_1()

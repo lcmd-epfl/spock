@@ -43,7 +43,6 @@ def run_spock_from_args(
     seed=None,
     prefit=False,
 ):
-    fitted = False
     if seed is None:
         seed = int(np.random.rand() * (2**32 - 1))
     np.random.seed(0)
@@ -99,18 +98,19 @@ def run_spock_from_args(
     all_n = np.zeros((len(idxs), max_breakpoints + 1), dtype=int)
     all_sc = np.zeros((len(idxs), max_breakpoints + 1), dtype=bool)
     for i, idx in enumerate(idxs):
+        fitted = False
         try:
             if verb > 0:
                 print(f"Attempting fit with descriptor index {idx}: {tags[idx]}...:")
             descriptor = d[:, idx].reshape(-1)
-            xrange = 0.05 * (max(descriptor) - min(descriptor))
+            xthresh = 0.05 * (max(descriptor) - min(descriptor))
             msel = ModelSelection(
                 descriptor,
                 target,
                 max_breakpoints=max_breakpoints,
                 max_iterations=n_iter_helper(fitted),
                 weights=weights,
-                tolerance=xrange,
+                tolerance=xthresh,
                 verbose=verb > 2,
             )
             all_sc[i, :] = np.array(
@@ -128,15 +128,21 @@ def run_spock_from_args(
                 dtype=int,
             )
 
+            # Save BICs and ns just in case
             bic_list = all_bic[i, :]
             n_list = all_n[i, :]
-            n = n_list[np.argmin(bic_list)]
-            min_bic = np.min(bic_list)
+            sc_list = all_sc[i, :]
 
             if verb > 4:
                 print(
                     f"The list of BICs for n breakpoints are:\n {bic_list} for\n {n_list}"
                 )
+
+            # Find best n
+            n = n_list[np.nanargmin(bic_list)]
+            sc = sc_list[np.nanargmin(bic_list)]
+            min_bic = np.min(bic_list)
+
             if n < 1:
                 if verb > 1:
                     print(
@@ -145,7 +151,7 @@ def run_spock_from_args(
             else:
                 fitted = True
 
-            if prefit and fitted and n > 0:
+            if prefit and fitted and n > 0 and sc:
                 if verb > 3:
                     print(
                         f"Prefitting the best model for this descriptor with {n} breakpoints..."
@@ -157,7 +163,7 @@ def run_spock_from_args(
                     n_breakpoints=int(n),
                     weights=weights,
                     max_iterations=5000,
-                    tolerance=xrange,
+                    tolerance=xthresh,
                 )
                 if verb > 2:
                     pw_fit.summary()
@@ -172,7 +178,9 @@ def run_spock_from_args(
                     print(
                         f"Prefitting volcano with {n} breakpoints and descriptor index {idx}: {tags[idx]}, for which a BIC of {min_bic} was obtained."
                     )
-                _ = plot_and_save(pw_fit, tags, idx, tidx, cb, ms, plotmode)
+                _ = plot_and_save(
+                    pw_fit, tags, idx, tidx, cb, ms, plotmode, return_value=False
+                )
 
         except Exception as m:
             traceback.print_exc()

@@ -133,7 +133,7 @@ def plot_2d(
     return fig
 
 
-def plot_and_save(pw_fit, tags, idx, tidx, cb, ms, plotmode):
+def plot_and_save(pw_fit, tags, idx, tidx, cb, ms, plotmode, return_value=True):
     # fig = plot_and_save(pw_fit, tags, idx, tidx)
 
     # Try to figure out good dimensions for the axes and ticks
@@ -189,4 +189,8 @@ def plot_and_save(pw_fit, tags, idx, tidx, cb, ms, plotmode):
     np.savetxt(
         csvname, zdata, fmt="%.4e", delimiter=",", header="{tags[idx]},{tags[tidx]}"
     )
-    return fig
+    if return_value:
+        return fig
+    else:
+        plt.close()
+        return None
