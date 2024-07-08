@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from navicat_spock.helpers import (
     processargs,
     group_data_points,
+    constant_data_points,
     curate_d,
     bround,
     namefixer,
@@ -63,6 +64,8 @@ def run_spock_from_args(
     # Atttempts to group data points based on shared characters in names.
     if setcbms:
         cb, ms = group_data_points(0, 2, names)
+    else:
+        cb, ms = constant_data_points(names)
 
     # Expecting a full reaction profile with corresponding column names. Descriptors will be identified.
     tags = np.array([str(tag) for tag in df.columns[1:]], dtype=object)
