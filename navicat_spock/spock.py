@@ -42,6 +42,8 @@ def run_spock_from_args(
     plotmode=1,
     seed=None,
     prefit=False,
+    fig=None,
+    ax=None,
 ):
     if seed is None:
         seed = int(np.random.rand() * (2**32 - 1))
@@ -52,6 +54,10 @@ def run_spock_from_args(
             f"spock will assume that {df.columns[0]} contains names/IDs of catalysts/samples."
         )
     names = df[df.columns[0]].values
+    if fig is None and ax is None:
+        fig, ax = plt.subplots(
+            frameon=False, figsize=[4.2, 3], dpi=300, constrained_layout=True
+        )
 
     # Atttempts to group data points based on shared characters in names.
     cb, ms = group_data_points(0, 2, names)
@@ -178,8 +184,17 @@ def run_spock_from_args(
                     print(
                         f"Prefitting volcano with {n} breakpoints and descriptor index {idx}: {tags[idx]}, for which a BIC of {min_bic} was obtained."
                     )
-                _ = plot_and_save(
-                    pw_fit, tags, idx, tidx, cb, ms, plotmode, return_value=False
+                _, _ = plot_and_save(
+                    pw_fit,
+                    tags,
+                    idx,
+                    tidx,
+                    cb,
+                    ms,
+                    plotmode,
+                    fig,
+                    ax,
+                    return_value=False,
                 )
 
         except Exception as m:
@@ -273,8 +288,8 @@ def run_spock_from_args(
             if verb > 2:
                 pw_fit.summary()
             # Plot the data, fit, breakpoints and confidence intervals
-            fig = plot_and_save(pw_fit, tags, idx, tidx, cb, ms, plotmode)
-            return fig
+            fig, ax = plot_and_save(pw_fit, tags, idx, tidx, cb, ms, fig, ax, plotmode)
+            return fig, ax
         else:
             min_bic = np.min(best_bic)
             idx = idxs[np.argmin(best_bic)]

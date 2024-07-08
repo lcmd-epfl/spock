@@ -65,6 +65,8 @@ def plot_2d(
     y,
     px,
     py,
+    fig,
+    ax,
     xmin=0,
     xmax=100,
     xbase=20,
@@ -78,9 +80,6 @@ def plot_2d(
     estimates=None,
     plotmode=1,
 ):
-    fig, ax = plt.subplots(
-        frameon=False, figsize=[4.2, 3], dpi=300, constrained_layout=True
-    )
     # Labels and key
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
@@ -130,10 +129,12 @@ def plot_2d(
     plt.savefig(filename)
     if os.name != "posix" and "DISPLAY" in os.environ:
         plt.show()
-    return fig
+    return fig, ax
 
 
-def plot_and_save(pw_fit, tags, idx, tidx, cb, ms, plotmode, return_value=True):
+def plot_and_save(
+    pw_fit, tags, idx, tidx, cb, ms, plotmode, fig, ax, return_value=True
+):
     # fig = plot_and_save(pw_fit, tags, idx, tidx)
 
     # Try to figure out good dimensions for the axes and ticks
@@ -161,11 +162,13 @@ def plot_and_save(pw_fit, tags, idx, tidx, cb, ms, plotmode, return_value=True):
     yint = intercept_hat + alpha_hat * xint
     for bp_count in range(len(breakpoints)):
         yint += beta_hats[bp_count] * np.maximum(xint - breakpoints[bp_count], 0)
-    fig = plot_2d(
+    fig, ax = plot_2d(
         xint,
         yint,
         x,
         y,
+        fig,
+        ax,
         xmin=min(pw_fit.xx),
         xmax=max(pw_fit.xx),
         xbase=xbase,
@@ -190,7 +193,7 @@ def plot_and_save(pw_fit, tags, idx, tidx, cb, ms, plotmode, return_value=True):
         csvname, zdata, fmt="%.4e", delimiter=",", header="{tags[idx]},{tags[tidx]}"
     )
     if return_value:
-        return fig
+        return fig, ax
     else:
         plt.close()
         return None
