@@ -324,8 +324,8 @@ def constant_data_points(names):
     cymar = cycle("o")
     cdict = dict(zip(names, cycol))
     mdict = dict(zip(names, cymar))
-    cb = np.array([cdict[i] for i in groups])
-    ms = np.array([mdict[i] for i in groups])
+    cb = np.array([cdict[i] for i in names])
+    ms = np.array([mdict[i] for i in names])
     return cb, ms
 
 
