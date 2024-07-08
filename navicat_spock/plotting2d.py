@@ -41,9 +41,10 @@ def beautify_ax(ax):
 
 
 def plotpoints(ax, px, py, cb, ms, plotmode):
+    assert len(px) == len(py) == len(cb) == len(ms)
     if plotmode == 1:
-        s = 30
-        lw = 0.3
+        s = 15
+        lw = 0.25
     else:
         s = 15
         lw = 0.25
@@ -135,8 +136,6 @@ def plot_2d(
 def plot_and_save(
     pw_fit, tags, idx, tidx, cb, ms, plotmode, fig, ax, return_value=True
 ):
-    # fig = plot_and_save(pw_fit, tags, idx, tidx)
-
     # Try to figure out good dimensions for the axes and ticks
     x = pw_fit.xx
     y = pw_fit.yy
