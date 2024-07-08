@@ -319,7 +319,7 @@ def group_data_points(bc, ec, names):
     return cb, ms
 
 
-def constant_data_points(bc, ec, names):
+def constant_data_points(names):
     cycol = cycle("b")
     cymar = cycle("o")
     cb = np.array([cycol[i] for i, g in enumerate(names)])
