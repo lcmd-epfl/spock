@@ -80,6 +80,7 @@ def plot_2d(
     breakpoints=None,
     estimates=None,
     plotmode=1,
+    save_fig=True,
 ):
     # Labels and key
     plt.xlabel(xlabel)
@@ -127,14 +128,15 @@ def plot_2d(
     ymin = bround(ymin, ybase, type="min")
     plt.ylim(ymin, ymax)
     plt.yticks(np.arange(ymin, ymax + 0.1, ybase))
-    plt.savefig(filename)
+    if save_fig:
+        plt.savefig(filename)
     if os.name != "posix" and "DISPLAY" in os.environ:
         plt.show()
     return fig, ax
 
 
 def plot_and_save(
-    pw_fit, tags, idx, tidx, cb, ms, plotmode, fig, ax, return_value=True
+    pw_fit, tags, idx, tidx, cb, ms, plotmode, fig, ax, return_value=True, save_fig=True, save_csv=True
 ):
     # Try to figure out good dimensions for the axes and ticks
     x = pw_fit.xx
@@ -180,17 +182,19 @@ def plot_and_save(
         estimates=estimates,
         plotmode=plotmode,
         filename=f"{namefixer(tags[idx].strip())}_volcano.png",
+        save_fig=save_fig,
     )
 
     # Pass in standard matplotlib keywords to control any of the plots
     # pw_fit.plot_breakpoint_confidence_intervals()
 
     # Print to file
-    zdata = list(zip(xint, yint))
-    csvname = f"{namefixer(tags[idx].strip())}_volcano.csv"
-    np.savetxt(
-        csvname, zdata, fmt="%.4e", delimiter=",", header="{tags[idx]},{tags[tidx]}"
-    )
+    if save_csv:
+        zdata = list(zip(xint, yint))
+        csvname = f"{namefixer(tags[idx].strip())}_volcano.csv"
+        np.savetxt(
+            csvname, zdata, fmt="%.4e", delimiter=",", header="{tags[idx]},{tags[tidx]}"
+        )
     if return_value:
         return fig, ax
     else:
