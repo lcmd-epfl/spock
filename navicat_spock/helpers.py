@@ -341,7 +341,7 @@ def processargs(arguments):
         epilog="Remember to cite the spock paper (when its out!) \n \n - and enjoy!",
     )
     vbuilder.add_argument(
-        "-version", "--version", action="version", version="%(prog)s 0.0.1"
+        "-version", "--version", action="version", version="%(prog)s 0.0.2"
     )
     vbuilder.add_argument(
         "-i",
