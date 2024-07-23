@@ -136,7 +136,18 @@ def plot_2d(
 
 
 def plot_and_save(
-    pw_fit, tags, idx, tidx, cb, ms, plotmode, fig, ax, return_value=True, save_fig=True, save_csv=True
+    pw_fit,
+    tags,
+    idx,
+    tidx,
+    cb,
+    ms,
+    plotmode,
+    fig,
+    ax,
+    return_value=True,
+    save_fig=True,
+    save_csv=True,
 ):
     # Try to figure out good dimensions for the axes and ticks
     x = pw_fit.xx

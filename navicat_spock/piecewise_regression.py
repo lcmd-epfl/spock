@@ -647,10 +647,22 @@ class Fit:
             results["rss"] = self.best_muggeo.best_fit.residual_sum_squares
             results["converged"] = True
             breakpoints = self.best_muggeo.best_fit.next_breakpoints
-            slopes = [self.best_muggeo.best_fit.raw_params[1]]
-            for b in self.best_muggeo.best_fit.raw_params[2 : 2 + len(breakpoints)]:
-                slopes.append(b + self.best_muggeo.best_fit.raw_params[1])
-            results["betas"] = np.array(slopes)
+            # slopes = [self.best_muggeo.best_fit.raw_params[1]]
+            slopes = []
+
+            # Lets get the slopes right
+            alpha_names = [
+                "alpha{}".format(alpha_i)
+                for alpha_i in range(1, self.n_breakpoints + 1)
+            ]
+            for est_name in alpha_names:
+                slopes.append(self.estimates[est_name]["estimate"])
+
+            # for i, b in enumerate(
+            #    self.best_muggeo.best_fit.raw_params[2 : 2 + len(breakpoints)]
+            # ):
+            #    slopes.append(b + slopes[-1])
+            results["slopes"] = np.array(slopes)
         else:
             results["converged"] = False
             results["estimates"] = None
@@ -658,7 +670,7 @@ class Fit:
             results["bic_w"] = None
             results["aic_w"] = None
             results["rss"] = None
-            results["betas"] = None
+            results["slopes"] = None
         return results
 
     def bootstrap_restarting(self):
@@ -1052,8 +1064,8 @@ class Fit:
             table_contents += single_line
 
             table_contents += (
-                "These alphas(gradients of segments) are estimated"
-                "from betas(change in gradient)\n"
+                "These alphas (gradients of segments) are estimated "
+                "from betas (change in gradient)\n"
             )
 
             alpha_names = [

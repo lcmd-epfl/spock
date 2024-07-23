@@ -24,7 +24,17 @@ from navicat_spock.plotting2d import plot_and_save
 
 
 def run_spock():
-    (df, wp, verb, imputer_strat, plotmode, seed, prefit, save_fig, save_csv) = processargs(sys.argv[1:])
+    (
+        df,
+        wp,
+        verb,
+        imputer_strat,
+        plotmode,
+        seed,
+        prefit,
+        save_fig,
+        save_csv,
+    ) = processargs(sys.argv[1:])
     _ = run_spock_from_args(
         df=df,
         wp=wp,
@@ -131,7 +141,7 @@ def run_spock_from_args(
             )
             all_sc[i, :] = np.array(
                 [
-                    slope_check(summary["betas"], verb)
+                    slope_check(summary["slopes"], verb)
                     for summary in msel.model_summaries
                 ],
                 dtype=bool,
@@ -298,7 +308,17 @@ def run_spock_from_args(
                 pw_fit.summary()
             # Plot the data, fit, breakpoints and confidence intervals
             fig, ax = plot_and_save(
-                pw_fit, tags, idx, tidx, cb, ms, fig=fig, ax=ax, plotmode=plotmode, save_fig=save_fig, save_csv=save_csv
+                pw_fit,
+                tags,
+                idx,
+                tidx,
+                cb,
+                ms,
+                fig=fig,
+                ax=ax,
+                plotmode=plotmode,
+                save_fig=save_fig,
+                save_csv=save_csv,
             )
             return fig, ax
         else:

@@ -48,29 +48,29 @@ def call_imputer(a, b, imputer_strat="iterative"):
         return a
 
 
-def slope_check(beta_hats, verb=0):
+def slope_check(alphas, verb=0):
     if verb > 4:
-        print(f"Slopes are: {beta_hats}")
-    if beta_hats is None:
+        print(f"Slopes are: {alphas}")
+    if alphas is None:
         return False
-    if len(beta_hats) == 1:
+    if len(alphas) == 1:
         return True
-    if len(beta_hats) == 2:
-        if beta_hats[0] > 0:
-            return beta_hats[1] < 0
-        if beta_hats[0] < 0:
-            return beta_hats[1] > 0
-    if len(beta_hats) == 3:
-        if beta_hats[0] > 0:
-            if beta_hats[1] > 0:
-                return beta_hats[2] < 0
-            if beta_hats[1] < 0:
-                return beta_hats[2] < 0
-        if beta_hats[0] < 0:
-            if beta_hats[1] > 0:
-                return beta_hats[2] > 0
-            if beta_hats[1] < 0:
-                return beta_hats[2] > 0
+    if len(alphas) == 2:
+        if alphas[0] > 0:
+            return alphas[1] < 0
+        if alphas[0] < 0:
+            return alphas[1] > 0
+    if len(alphas) == 3:
+        if alphas[0] > 0:
+            if alphas[1] > 0:
+                return alphas[2] < 0
+            if alphas[1] < 0:
+                return alphas[2] < 0
+        if alphas[0] < 0:
+            if alphas[1] > 0:
+                return alphas[2] > 0
+            if alphas[1] < 0:
+                return alphas[2] > 0
     return False
 
 
@@ -489,7 +489,7 @@ def check_input(filenames, wp, imputer_strat, verb):
     return dfs
 
 
-def test_vif_1():
+def test_vif():
     sol = np.array([22.95, 3.0, 12.95, 3.0])
     a = [1, 1, 2, 3, 4]
     b = [2, 2, 3, 2, 1]
@@ -503,5 +503,13 @@ def test_vif_1():
     assert np.allclose(vif, sol)
 
 
+def test_slope_check():
+    assert not slope_check([10, 10, 10])
+    assert not slope_check([10, -10, 10])
+    assert not slope_check([-10, 10, -10])
+    assert slope_check([10, 10, -10])
+    assert slope_check([10, -10, -10])
+
+
 if __name__ == "__main__":
-    test_vif_1()
+    test_vif()
