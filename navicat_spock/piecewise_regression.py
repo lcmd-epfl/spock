@@ -1100,7 +1100,7 @@ class Fit:
 
 class ModelSelection:
     """
-    Experimental - uses simple BIC based on simple linear model.
+    Uses BIC to compare models with different number of breakpoints.
     """
 
     def __init__(

@@ -123,6 +123,7 @@ def run_spock_from_args(
     all_bic = np.zeros((len(idxs), max_breakpoints + 1), dtype=float)
     all_n = np.zeros((len(idxs), max_breakpoints + 1), dtype=int)
     all_sc = np.zeros((len(idxs), max_breakpoints + 1), dtype=bool)
+    msels = []
     for i, idx in enumerate(idxs):
         fitted = False
         try:
@@ -139,6 +140,7 @@ def run_spock_from_args(
                 tolerance=xthresh,
                 verbose=verb > 2,
             )
+            msels.append(msel)
             all_sc[i, :] = np.array(
                 [
                     slope_check(summary["slopes"], verb)
@@ -226,6 +228,7 @@ def run_spock_from_args(
                 print(
                     f"Fit did not converge with descriptor index {idx}: {tags[idx]}\n due to {m}"
                 )
+            msels.append(None)
 
     # Done iterating over descriptors
     best_n = np.zeros_like(idxs, dtype=int)
@@ -293,17 +296,21 @@ def run_spock_from_args(
                     f"Fitting volcano with {n} breakpoints and descriptor index {idx}: {tags[idx]}, as determined from BIC."
                 )
             descriptor = d[:, idx].reshape(-1)
-            xrange = 0.05 * (max(descriptor) - min(descriptor))
+            xthresh = 0.05 * (max(descriptor) - min(descriptor))
             pw_fit = Fit(
                 descriptor,
                 target,
                 n_breakpoints=n,
                 weights=weights,
-                max_iterations=5000,
-                tolerance=xrange,
+                max_iterations=n_iter_helper(fitted),
+                tolerance=xthresh,
             )
             if not pw_fit.best_muggeo:
-                raise ConvergenceError("The fitting process did not converge.")
+                # If for some reason the fit fails now, we use the preliminary fit instead
+                pw_fit.best_muggeo = msels[idx - 1].models[n - 1].best_muggeo
+            if not slope_check(pw_fit.get_results()["slopes"], verb):
+                # If for some reason the fit switched the slopes, we use the preliminary fit instead
+                pw_fit.best_muggeo = msels[idx - 1].models[n - 1].best_muggeo
             if verb > 2:
                 pw_fit.summary()
             # Plot the data, fit, breakpoints and confidence intervals
