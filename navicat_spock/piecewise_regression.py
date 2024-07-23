@@ -653,7 +653,7 @@ class Fit:
             # Lets get the slopes right
             alpha_names = [
                 "alpha{}".format(alpha_i)
-                for alpha_i in range(1, self.n_breakpoints + 1)
+                for alpha_i in range(1, self.n_breakpoints + 2)
             ]
             for est_name in alpha_names:
                 slopes.append(results["estimates"][est_name]["estimate"])
@@ -1225,7 +1225,7 @@ class ModelSelection:
             "estimates": {},
             "converged": True,
             "rss": rss,
-            "betas": np.array(results.params[1], ndmin=1),
+            "slopes": np.array(results.params[1], ndmin=1),
         }
 
         fit_data["estimates"]["const"] = results.params[0]

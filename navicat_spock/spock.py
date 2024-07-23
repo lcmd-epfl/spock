@@ -188,7 +188,7 @@ def run_spock_from_args(
                     target,
                     n_breakpoints=int(n),
                     weights=weights,
-                    max_iterations=5000,
+                    max_iterations=n_iter_helper(fitted),
                     tolerance=xthresh,
                 )
                 if verb > 2:
