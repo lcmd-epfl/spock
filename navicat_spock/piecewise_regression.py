@@ -656,7 +656,7 @@ class Fit:
                 for alpha_i in range(1, self.n_breakpoints + 1)
             ]
             for est_name in alpha_names:
-                slopes.append(self.estimates[est_name]["estimate"])
+                slopes.append(results["estimates"][est_name]["estimate"])
 
             # for i, b in enumerate(
             #    self.best_muggeo.best_fit.raw_params[2 : 2 + len(breakpoints)]
