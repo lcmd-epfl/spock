@@ -17,13 +17,14 @@ from navicat_spock.helpers import (
     n_iter_helper,
     slope_check,
 )
+
 from navicat_spock.exceptions import InputError, ConvergenceError
 from navicat_spock.piecewise_regression import ModelSelection, Fit
 from navicat_spock.plotting2d import plot_and_save
 
 
 def run_spock():
-    (df, wp, verb, imputer_strat, plotmode, seed, prefit) = processargs(sys.argv[1:])
+    (df, wp, verb, imputer_strat, plotmode, seed, prefit, save_fig, save_csv) = processargs(sys.argv[1:])
     _ = run_spock_from_args(
         df=df,
         wp=wp,
@@ -32,6 +33,8 @@ def run_spock():
         plotmode=plotmode,
         seed=seed,
         prefit=prefit,
+        save_fig=save_fig,
+        save_csv=save_csv,
     )
 
 
@@ -46,6 +49,8 @@ def run_spock_from_args(
     setcbms=True,
     fig=None,
     ax=None,
+    save_fig=True,
+    save_csv=True,
 ):
     if seed is None:
         seed = int(np.random.rand() * (2**32 - 1))
@@ -294,7 +299,7 @@ def run_spock_from_args(
                 pw_fit.summary()
             # Plot the data, fit, breakpoints and confidence intervals
             fig, ax = plot_and_save(
-                pw_fit, tags, idx, tidx, cb, ms, fig=fig, ax=ax, plotmode=plotmode
+                pw_fit, tags, idx, tidx, cb, ms, fig=fig, ax=ax, plotmode=plotmode, save_fig=save_fig, save_csv=save_csv
             )
             return fig, ax
         else:

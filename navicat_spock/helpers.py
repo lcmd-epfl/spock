@@ -414,6 +414,22 @@ def processargs(arguments):
         default=0,
         help="Plot and print the best volcano per descriptor. This is slow and writes a lot of plots, do not use unless you know what you are doing. (default: 0, False)",
     )
+    vbuilder.add_argument(
+        "--save_fig",
+        "-save_fig",
+        dest="save_fig",
+        type=bool,
+        default=0,
+        help="Save the volcano plot as an image. (default: 0, False)",
+    )
+    vbuilder.add_argument(
+        "--save_csv",
+        "-save_csv",
+        dest="save_csv",
+        type=bool,
+        default=0,
+        help="Save the volcano plot data to a CSV file. (default: 0, False)",
+    )
     args = vbuilder.parse_args(arguments)
 
     dfs = check_input(args.filenames, args.wp, args.imputer_strat, args.verb)
@@ -432,6 +448,8 @@ def processargs(arguments):
         args.plotmode,
         args.seed,
         args.prefit,
+        args.save_fig,
+        args.save_csv,
     )
 
 
