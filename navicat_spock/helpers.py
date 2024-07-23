@@ -54,7 +54,7 @@ def slope_check(beta_hats, verb=0):
     if beta_hats is None:
         return False
     if len(beta_hats) == 1:
-        return False
+        return True
     if len(beta_hats) == 2:
         if beta_hats[0] > 0:
             return beta_hats[1] < 0
@@ -235,18 +235,23 @@ def normalize(a, axis=-1, order=2):
     return a / np.expand_dims(l2, axis)
 
 
-def reweighter(target, wp=3):
+def reweighter(target, wp=2):
     assert isinstance(wp, int)
-    std = target.std()
-    norm = sum(target)  # Not needed since robust regression will normalize
-    rescaled = [(py - min(target)) + std for py in target]
-    # print(rescaled)
-    scaled = [(py / max(abs(target))) for py in rescaled]
-    # print(scaled)
-    weights = np.round(
-        np.array([py**wp for py in scaled]), decimals=6
-    )  # **2 at least, could be increased
-    weights = normalize(weights).reshape(-1)
+    if wp > 0:
+        std = target.std()
+        norm = sum(target)  # Not needed since robust regression will normalize
+        rescaled = [(py - min(target)) + std for py in target]
+        # print(rescaled)
+        scaled = [(py / max(abs(target))) for py in rescaled]
+        # print(scaled)
+        weights = np.round(
+            np.array([py**wp for py in scaled]), decimals=6
+        )  # **2 at least, could be increased
+        weights = normalize(weights).reshape(-1)
+    else:
+        std = target.std()
+        norm = sum(target)  # Not needed since robust regression will normalize
+        weights = np.array([1 / abs(norm) for _ in target])
     return weights
 
 
@@ -455,8 +460,14 @@ def check_input(filenames, wp, imputer_strat, verb):
         )
     if not isinstance(verb, int):
         raise InputError("Invalid verbosity input! Should be a positive integer or 0.")
-    if not wp > 0 and isinstance(wp, int):
-        raise InputError("Invalid weighting power input! Should be a positive integer.")
+    if not isinstance(wp, int):
+        raise InputError(
+            "Invalid weighting power input! Should be a positive integer or 0."
+        )
+    elif wp < 0:
+        raise InputError(
+            "Invalid weighting power input! Should be a positive integer or 0."
+        )
     return dfs
 
 

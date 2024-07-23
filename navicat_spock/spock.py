@@ -239,13 +239,12 @@ def run_spock_from_args(
                 print("Filtering by slope criterion...")
             bic_list = bic_list[sc_list]
             n_list = n_list[sc_list]
-        elif any(n_list):
-            if verb > 4:
-                print("Filtering by number of breakpoints...")
-            filter_0s = np.nonzero(n_list)
-            bic_list = bic_list[filter_0s]
-            n_list = n_list[filter_0s]
-
+        # if any(n_list):
+        #    if verb > 4:
+        #        print("Filtering by number of breakpoints...")
+        #    filter_0s = np.nonzero(n_list)
+        #    bic_list = bic_list[filter_0s]
+        #    n_list = n_list[filter_0s]
         if verb > 4:
             print(
                 f"After filtering, the list of BICs for n breakpoints is:\n {bic_list}\n {n_list}"
