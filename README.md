@@ -2,7 +2,7 @@ spock: Volcano Plot Fitting Tool
 ==============================================
 
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/rlaplaza/spock/HEAD?labpath=App.ipynb)
-[//]: # "Comment [![DOI](https://zenodo.org/badge/381737392.svg)](https://zenodo.org/badge/latestdoi/381737392)
+[![DOI](https://zenodo.org/badge/381737392.svg)](https://zenodo.org/badge/latestdoi/381737392)
 
 ![spock logo](./images/spock_logo.png)
 [![PyPI version](https://badge.fury.io/py/navicat-spock.svg)](https://badge.fury.io/py/navicat-spock)
@@ -25,7 +25,7 @@ The code runs on pure python with the following dependencies:
 
 ## Install [↑](#install)
 
-You can install volcanic using pip:
+You can install spock using pip:
 
 ```python
 pip install navicat_spock
