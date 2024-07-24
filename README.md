@@ -2,12 +2,10 @@ spock: Volcano Plot Fitting Tool
 ==============================================
 
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/rlaplaza/spock/HEAD?labpath=App.ipynb)
-<!---
-[![DOI](https://zenodo.org/badge/381737392.svg)](https://zenodo.org/badge/latestdoi/381737392)
+[//]: # "Comment [![DOI](https://zenodo.org/badge/381737392.svg)](https://zenodo.org/badge/latestdoi/381737392)
 
-![volcanic logo](./images/volcanic_logo.png)
-[![PyPI version](https://badge.fury.io/py/navicat_volcanic.svg)](https://badge.fury.io/py/navicat_volcanic)
-
+![spock logo](./images/spock_logo.png)
+[![PyPI version](https://badge.fury.io/py/navicat-spock.svg)](https://badge.fury.io/py/navicat-spock)
 
 ## Contents
 * [About](#about-)
@@ -23,11 +21,11 @@ The code runs on pure python with the following dependencies:
 - `matplotlib`
 - `pandas`
 - `scikit-learn`
-- Optionally, `h5py`
+- `statsmodels`
 
 ## Install [↑](#install)
 
-You can install spock using pip:
+You can install volcanic using pip:
 
 ```python
 pip install navicat_spock
@@ -36,13 +34,11 @@ pip install navicat_spock
 Afterwards, you can call spock as:
 
 ```python
-python -m navicat_volcanic [-h] [-version] -i [FILENAMES] [-df DFILENAMES] [-nd ND] [-v VERB] [-r RUNMODE] [-lsfer | -thermo | -kinetic | -es | -tof | -all] [-T TEMP] [-pm PLOTMODE] [-ic IC] [-fc FC]
-                [-rm RMARGIN] [-lm LMARGIN] [-np NPOINTS] [-d] [-is IMPUTER_STRAT] [-refill]
+python -m navicat_spock [-h] [-version] -i [FILENAMES] [-wp WP] [-v VERB] [-pm PLOTMODE] [-rng SEED] [-fa FA] [-is IMPUTER_STRAT] [--plot_all PREFIT] [--save_fig SAVE_FIG] [--save_csv SAVE_CSV]
 ```
 or simply
 ```python
-navicat_volcanic [-h] [-version] -i [FILENAMES] [-df DFILENAMES] [-nd ND] [-v VERB] [-r RUNMODE] [-lsfer | -thermo | -kinetic | -es | -tof | -all] [-T TEMP] [-pm PLOTMODE] [-ic IC] [-fc FC]
-                [-rm RMARGIN] [-lm LMARGIN] [-np NPOINTS] [-d] [-is IMPUTER_STRAT] [-refill]
+navicat_spock [-h] [-version] -i [FILENAMES] [-wp WP] [-v VERB] [-pm PLOTMODE] [-rng SEED] [-fa FA] [-is IMPUTER_STRAT] [--plot_all PREFIT] [--save_fig SAVE_FIG] [--save_csv SAVE_CSV]
 ```
 
 Alternatively, you can download the package and execute:
@@ -51,52 +47,36 @@ Alternatively, you can download the package and execute:
 python setup.py install
 ```
 
-Afterwards, you can call volcanic as:
+Afterwards, you can call spock as above. Options can be consulted using the `-h` flag in either case. The help menu is quite detailed. 
 
-```python
-python -m navicat_volcanic [-h] [-version] -i [FILENAMES] [-df DFILENAMES] [-nd ND] [-v VERB] [-r RUNMODE] [-lsfer | -thermo | -kinetic | -es | -tof | -all] [-T TEMP] [-pm PLOTMODE] [-ic IC] [-fc FC]
-                [-rm RMARGIN] [-lm LMARGIN] [-np NPOINTS] [-d] [-is IMPUTER_STRAT] [-refill]
-```
-or
-```python
-navicat_volcanic [-h] [-version] -i [FILENAMES] [-df DFILENAMES] [-nd ND] [-v VERB] [-r RUNMODE] [-lsfer | -thermo | -kinetic | -es | -tof | -all] [-T TEMP] [-pm PLOTMODE] [-ic IC] [-fc FC]
-                [-rm RMARGIN] [-lm LMARGIN] [-np NPOINTS] [-d] [-is IMPUTER_STRAT] [-refill]
-```
-
-
-Options can be consulted using the `-h` flag in either case. The help menu is quite detailed. 
-
-Note that the volcano plot and activity map functions are directly exposed in `volcanic.py` as `volcanic_2d` and `volcanic_3d` respectively, in case you want to incorporate them in your own code.
+Note that the volcano plot generation function is directly exposed in case you want to use it in your code.
 
 ## Examples [↑](#examples)
 
-The examples subdirectory contains a copious amount of tests which double as examples. Any of the data files can be run as:
+The `manuscript_examples` subdirectory contains several examples used in the manuscript. Any of the data files can be run as:
 
 ```python
-python -m navicat_volcanic -i [FILENAME]
+python -m navicat_spock -i [FILENAME]
 ```
 
-This will query the user for options and generate the volcano plots as png images. Options can be consulted with the `-h` flag.
+We also provide a jupyter notebook where the plots are generated one by one.
 
-The input of volcanic is a `pandas` compatible dataframe, which includes plain .csv and .xls files. 
+The input of spock is a `pandas` compatible dataframe, which includes plain .csv and .xls files. 
 
-Regarding format, volcanic expects headers for all columns. The first column must contain names/identifiers. Then, volcanic expects a number of columns with relative free energies for the species in the catalytic cycle (in order of appearance), whose headers must contain "TS" if the species is a transition state, and a final column whose header is "Product" containing the reaction energy. Non-energy descriptors can be input as a separate file using the `-df` flag or as extra columns whose headers contain the word "Descriptor".
+Regarding format, spock expects headers for all columns. The first column must contain names/identifiers. The catalytic performance metric must include the word "target" in its header. The rest of the columns will be interpreted as potential descriptors.
 
-High verbosity levels (`-v 1`, `-v 2`, etc.) will print the output as .csv files as well, which can be used to plot your volcano plot or activity map using external tools. An example is found in the `pretty_plotting_example` directory in this repository. Keep increasing the verbosity to get even more detailed output. This can be useful for understanding what the code is doing and what can have possibly gone wrong. To be as automated as possible, reasonable default values are set for most choices. The generated csvs also contain the 95% confidence interval value for the plot in question, which are obtained by propagating the uncertainty of the LSFERs involved in the computation. To simplify the propagation of uncertainties in the TOF computation, the uncertainty is approximated using the energy span in TOF volcano plots. 
+High verbosity levels (`-v 1`, `-v 2`, etc.) will force spock to print out information about every step. This can be useful for understanding what the code is doing and what can have possibly gone wrong. To be as automated as possible, reasonable default values are set for most choices. 
 
 The plotmode (`-pm 1`, `-pm 2`) option can be used to modify the default look of the generated pngs, including more detail as the plotmode level increases. 
 
 
 ## Citation [↑](#citation)
 
-Please cite the accompanying manuscript, which clarifies the details of volcano plot construction. You can find it [here](https://rdcu.be/cT7uu) and in the reference:
-
-```
-Laplaza, R., Das, S., Wodrich, M.D. et al. Constructing and interpreting volcano plots and activity maps to navigate homogeneous catalyst landscapes. Nat Protoc (2022). https://doi.org/10.1038/s41596-022-00726-2
-```
-
-Kinetic volcano plots were introduced [here](https://doi.org/10.1039/C6SC01660J) and turnover frequency/energy span volcano plots were introduced [here](https://doi.org/10.1021/acscatal.9b00717). The energy span model was introduced by Kozuch and Shaik [here](https://doi.org/10.1021/ar1000956). Please include those citations where relevant. A comprehensive account can be found [here](https://doi.org/10.1021/acs.accounts.0c00857).
+Please cite the accompanying manuscript (to be submitted), which clarifies the details of volcano plot construction, and this repository through its DOI.
 
 
--->
+---
+
+
+
 
