@@ -247,6 +247,17 @@ def reweighter(target, wp=2):
         weights = np.round(
             np.array([py**wp for py in scaled]), decimals=6
         )  # **2 at least, could be increased
+    elif wp < 0:
+        wp = np.abs(wp)
+        std = target.std()
+        norm = sum(target)  # Not needed since robust regression will normalize
+        rescaled = [(py - min(target)) + std for py in target]
+        # print(rescaled)
+        scaled = [(py / max(abs(target))) for py in rescaled]
+        # print(scaled)
+        weights = np.round(
+            np.array([1 / (py**wp) for py in scaled]), decimals=6
+        )  # **2 at least, could be increased
         weights = normalize(weights).reshape(-1)
     else:
         std = target.std()
@@ -341,7 +352,7 @@ def processargs(arguments):
         epilog="Remember to cite the spock paper (when its out!) \n \n - and enjoy!",
     )
     vbuilder.add_argument(
-        "-version", "--version", action="version", version="%(prog)s 0.0.2"
+        "-version", "--version", action="version", version="%(prog)s 0.0.3"
     )
     vbuilder.add_argument(
         "-i",
@@ -362,7 +373,7 @@ def processargs(arguments):
         dest="wp",
         type=int,
         default=1,
-        help="In the regression, integer power with which higher activity points are weighted. Higher means low activity points are given less priority in the fit (default: 1)",
+        help="In the regression, integer power with which higher activity points are weighted. Higher means low activity points are given less priority in the fit. Negative values will do the opposite and give more weight to low activity points. (default: 1)",
     )
     vbuilder.add_argument(
         "-v",
