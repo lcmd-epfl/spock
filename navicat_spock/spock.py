@@ -88,6 +88,7 @@ def run_spock_from_args(
 
     # TS or intermediate are interpreted from column names. Coeffs is a boolean array.
     descriptors = np.zeros(len(tags), dtype=bool)
+    tidx = None
     for i, tag in enumerate(tags):
         if "TARGET" in tag.upper():
             if verb > 0:
@@ -101,6 +102,10 @@ def run_spock_from_args(
                     f"Assuming field {tag} corresponds to a possible descriptor variable."
                 )
             descriptors[i] = True
+    if tdix is None:
+        raise Exception(
+            'No target (performance metric) was detected. The input data must have a "TARGET" header to identify which column is the target! Exiting!'
+        )
 
     # Your data might contain outliers (human error, computation error) or missing points.
     # We will attempt to curate your data automatically.
