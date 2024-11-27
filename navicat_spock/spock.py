@@ -102,7 +102,7 @@ def run_spock_from_args(
                     f"Assuming field {tag} corresponds to a possible descriptor variable."
                 )
             descriptors[i] = True
-    if tdix is None:
+    if tidx is None:
         raise Exception(
             'No target (performance metric) was detected. The input data must have a "TARGET" header to identify which column is the target! Exiting!'
         )
