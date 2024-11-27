@@ -7,6 +7,7 @@ import sys
 import re
 import sklearn
 from sklearn import linear_model
+from sklearn.covariance import EllipticEnvelope
 from itertools import cycle
 from io import StringIO
 
@@ -50,7 +51,7 @@ def call_imputer(a, b, imputer_strat="iterative"):
 
 def slope_check(alphas, verb=0):
     if verb > 4:
-        print(f"Slopes are: {alphas}")
+        print(f"The slopes of the linear segments are: {alphas}")
     if alphas is None:
         return False
     if len(alphas) == 1:
@@ -111,7 +112,6 @@ def prune_by_vif(X, thresh=4, verb=0):
     cols = X.columns
     variables = np.arange(X.shape[1])
     dropped = True
-    np.save("test_1.npy", X[cols].values)
     while dropped:
         dropped = False
         c = X[cols[variables]].values
@@ -129,7 +129,6 @@ def prune_by_vif(X, thresh=4, verb=0):
                 print(
                     f"Exiting variance inflation pruning due to max. variance inflation of {vif[maxloc]} < {thresh}."
                 )
-    np.save("test_2.npy", c)
     return X[cols[variables]]
 
 
@@ -293,7 +292,23 @@ def curate_d(d, descriptors, cb, ms, names, imputer_strat="none", verb=0):
     curated_ms = ms[incomplete]
     curated_names = names[incomplete]
     curated_d = d[incomplete, :]
+    check_outliers(curated_d, verb=verb)
     return curated_d, curated_cb, curated_ms, curated_names
+
+
+def check_outliers(d, verb=0):
+    if d.shape[0] <= d.shape[1] ** 2:
+        if verb > 0:
+            print(
+                "Outlier detection skipped due to large number of features w.r.t. number of datapoints."
+            )
+    else:
+        scores = EllipticEnvelope().fit_predict(d)
+        for i, score in enumerate(scores):
+            if score == -1 and verb > 0:
+                print(
+                    f"Datapoint {d[i,:]} is probably an outlier. It will be processed normally, but you may want to double check!"
+                )
 
 
 def yesno(question):
