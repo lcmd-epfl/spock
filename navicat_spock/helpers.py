@@ -296,18 +296,18 @@ def curate_d(d, descriptors, cb, ms, names, imputer_strat="none", verb=0):
     return curated_d, curated_cb, curated_ms, curated_names
 
 
-def check_outliers(d, verb=0):
+def check_outliers(d, seed=42, verb=0):
     if d.shape[0] <= d.shape[1] ** 2:
         if verb > 0:
             print(
                 "Outlier detection skipped due to large number of features w.r.t. number of datapoints."
             )
     else:
-        scores = EllipticEnvelope().fit_predict(d)
+        scores = EllipticEnvelope(contamination=0.05, random_state=seed).fit_predict(d)
         for i, score in enumerate(scores):
             if score == -1 and verb > 0:
                 print(
-                    f"Datapoint {d[i,:]} is probably an outlier. It will be processed normally, but you may want to double check!"
+                    f"Datapoint {i}: {d[i,:]} is potentially an outlier. It will be processed normally, but you may want to double check the input data!"
                 )
 
 
