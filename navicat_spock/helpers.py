@@ -265,7 +265,7 @@ def reweighter(target, wp=2):
     return weights
 
 
-def curate_d(d, descriptors, cb, ms, names, imputer_strat="none", verb=0):
+def curate_d(d, descriptors, cb, ms, names, imputer_strat="none", seed=42, verb=0):
     assert isinstance(d, np.ndarray)
     curated_d = np.zeros_like(d)
     for i in range(d.shape[0]):
@@ -292,7 +292,7 @@ def curate_d(d, descriptors, cb, ms, names, imputer_strat="none", verb=0):
     curated_ms = ms[incomplete]
     curated_names = names[incomplete]
     curated_d = d[incomplete, :]
-    check_outliers(curated_d, verb=verb)
+    check_outliers(curated_d, seed=seed, verb=verb)
     return curated_d, curated_cb, curated_ms, curated_names
 
 
@@ -367,7 +367,7 @@ def processargs(arguments):
         epilog="Remember to cite the spock paper (when its out!) \n \n - and enjoy!",
     )
     vbuilder.add_argument(
-        "-version", "--version", action="version", version="%(prog)s 0.0.3"
+        "-version", "--version", action="version", version="%(prog)s 0.0.4"
     )
     vbuilder.add_argument(
         "-i",

@@ -12,7 +12,7 @@ with io.open(path.join(this_directory, "README.md"), encoding="utf-8") as f:
 setup(
     name="spock",
     packages=["navicat_spock"],
-    version="0.0.3",
+    version="0.0.4",
     description="Volcano Plot fitting tool",
     long_description=long_description,
     long_description_content_type="text/markdown",

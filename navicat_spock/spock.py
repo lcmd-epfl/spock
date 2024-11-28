@@ -111,7 +111,7 @@ def run_spock_from_args(
     # We will attempt to curate your data automatically.
     try:
         d, cb, ms, names = curate_d(
-            d, descriptors, cb, ms, names, imputer_strat, verb=verb
+            d, descriptors, cb, ms, names, imputer_strat, seed, verb=verb
         )
     except Exception as m:
         pass
