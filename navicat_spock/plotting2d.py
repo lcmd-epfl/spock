@@ -80,6 +80,7 @@ def plot_2d(
     breakpoints=None,
     estimates=None,
     plotmode=1,
+    return_value=True,
     save_fig=True,
 ):
     # Labels and key
@@ -132,7 +133,11 @@ def plot_2d(
         plt.savefig(filename)
     if os.name != "posix" and "DISPLAY" in os.environ:
         plt.show()
-    return fig, ax
+    if return_value:
+        return fig, ax
+    else:
+        plt.close()
+        return None, None
 
 
 def plot_and_save(
@@ -193,6 +198,7 @@ def plot_and_save(
         estimates=estimates,
         plotmode=plotmode,
         filename=f"{namefixer(tags[idx].strip())}_volcano.png",
+        return_value=return_value,
         save_fig=save_fig,
     )
 
@@ -204,10 +210,13 @@ def plot_and_save(
         zdata = list(zip(xint, yint))
         csvname = f"{namefixer(tags[idx].strip())}_volcano.csv"
         np.savetxt(
-            csvname, zdata, fmt="%.4e", delimiter=",", header="{tags[idx]},{tags[tidx]}"
+            csvname,
+            zdata,
+            fmt="%.4e",
+            delimiter=",",
+            header="f{tags[idx]},{tags[tidx]}",
         )
     if return_value:
         return fig, ax
     else:
-        plt.close()
-        return None
+        return None, None

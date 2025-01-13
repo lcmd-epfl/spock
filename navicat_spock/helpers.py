@@ -142,6 +142,8 @@ def augment(df, level, verb=0):
         if verb > 0:
             print(f"Doing level 1 feature augmentation...")
         for i in x_full.keys():
+            if "TARGET" in i.upper():
+                continue
             inv = f"1/{i}"
             pow2 = f"{i}^2"
             # pow3 = f"{i}^3"
@@ -159,6 +161,8 @@ def augment(df, level, verb=0):
         if verb > 0:
             print(f"Doing level 2 feature augmentation...")
         for i, j in zip(x_full.keys(), x_full.keys()[1:]):
+            if "TARGET" in i.upper() or "TARGET" in j.upper():
+                continue
             prod = f"{i}x{j}"
             div12 = f"{i}/{j}"
             div21 = f"{j}/{i}"
@@ -176,6 +180,8 @@ def augment(df, level, verb=0):
                 continue
             i = x_full.keys()[i]
             j = x_full.keys()[j]
+            if "TARGET" in i.upper() or "TARGET" in j.upper():
+                continue
             prod = f"{i}x{j}"
             div12 = f"{i}/{j}"
             div21 = f"{j}/{i}"
@@ -225,7 +231,9 @@ def Capturing(list):
 
 def namefixer(filename):
     assert isinstance(filename, str)
-    return re.sub("[^a-zA-Z0-9 \n\.]", "_", filename).replace(" ", "_")
+    return (
+        re.sub("[^a-zA-Z0-9 \n\.]", "_", filename).replace(" ", "_").replace("__", "_")
+    )
 
 
 def normalize(a, axis=-1, order=2):
@@ -367,7 +375,7 @@ def processargs(arguments):
         epilog="Remember to cite the spock paper (when its out!) \n \n - and enjoy!",
     )
     vbuilder.add_argument(
-        "-version", "--version", action="version", version="%(prog)s 0.0.4"
+        "-version", "--version", action="version", version="%(prog)s 0.0.5"
     )
     vbuilder.add_argument(
         "-i",

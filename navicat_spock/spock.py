@@ -75,6 +75,10 @@ def run_spock_from_args(
         fig, ax = plt.subplots(
             frameon=False, figsize=[4.2, 3], dpi=300, constrained_layout=True
         )
+    if prefit:
+        fig_r, ax_r = plt.subplots(
+            frameon=False, figsize=[4.2, 3], dpi=300, constrained_layout=True
+        )
 
     # Atttempts to group data points based on shared characters in names.
     if setcbms:
@@ -211,16 +215,25 @@ def run_spock_from_args(
                     print(
                         f"Prefitting volcano with {n} breakpoints and descriptor index {idx}: {tags[idx]}, for which a BIC of {min_bic} was obtained."
                     )
-                _, _ = plot_and_save(
+                if fig_r is None and ax_r is None:
+                    fig_r, ax_r = plt.subplots(
+                        frameon=False,
+                        figsize=[4.2, 3],
+                        dpi=300,
+                        constrained_layout=True,
+                    )
+                fig_r, ax_r = plot_and_save(
                     pw_fit,
                     tags,
                     idx,
                     tidx,
                     cb,
                     ms,
-                    plotmode=plotmode,
                     fig=fig,
                     ax=ax,
+                    plotmode=plotmode,
+                    save_fig=save_fig,
+                    save_csv=save_csv,
                     return_value=False,
                 )
 
@@ -318,6 +331,13 @@ def run_spock_from_args(
                 pw_fit.best_muggeo = msels[idx - 1].models[n - 1].best_muggeo
             if verb > 2:
                 pw_fit.summary()
+            if fig is None and ax is None:
+                fig, ax = plt.subplots(
+                    frameon=False,
+                    figsize=[4.2, 3],
+                    dpi=300,
+                    constrained_layout=True,
+                )
             # Plot the data, fit, breakpoints and confidence intervals
             fig, ax = plot_and_save(
                 pw_fit,
@@ -331,6 +351,7 @@ def run_spock_from_args(
                 plotmode=plotmode,
                 save_fig=save_fig,
                 save_csv=save_csv,
+                return_value=True,
             )
             return fig, ax
         else:
