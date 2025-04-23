@@ -72,7 +72,11 @@ The plotmode (`-pm 1`, `-pm 2`) option can be used to modify the default look of
 
 ## Citation [↑](#citation)
 
-Please cite the accompanying manuscript (to be submitted), which clarifies the details of volcano plot construction, and this repository through its DOI.
+Please cite our work with the repository DOI and the manuscript that introduced the code. You can find it [here](https://doi.org/10.1021/acscatal.5c00412) and in the reference:
+
+```
+Suvarna, M.; Laplaza, R.; Graux, R.; López, N.; Corminboeuf, C.; Jorner, K.; Pérez-Ramírez, J. SPOCK Tool for Constructing Empirical Volcano Diagrams from Catalytic Data. ACS Catal. 2025, 7296–7307. https://doi.org/10.1021/acscatal.5c00412
+```
 
 
 ---
